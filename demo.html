@@ -1,0 +1,739 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+    <title>live demo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <!-- SIPML5 API:
+    DEBUG VERSION: 'SIPml-api.js'
+    RELEASE VERSION: 'release/SIPml-api.js'
+    -->
+    <script src="SIPml-api.js?svn=250" type="text/javascript"></script>
+    <!-- Styles -->
+    <link href="./assets/css/bootstrap.css" rel="stylesheet"/>
+    <style type="text/css">
+        body {
+            padding-top: 80px;
+            padding-bottom: 40px;
+        }
+
+        .navbar-inner-red {
+            background-color: #600000;
+            background-image: none;
+            background-repeat: no-repeat;
+            filter: none;
+        }
+
+        .full-screen {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .normal-screen {
+            position: relative;
+        }
+
+        .call-options {
+            padding: 5px;
+            background-color: #f0f0f0;
+            border: 1px solid #eee;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            -webkit-border-radius: 4px;
+            -moz-border-radius: 4px;
+            border-radius: 4px;
+            -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+            -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+            -webkit-transition-property: opacity;
+            -moz-transition-property: opacity;
+            -o-transition-property: opacity;
+            -webkit-transition-duration: 2s;
+            -moz-transition-duration: 2s;
+            -o-transition-duration: 2s;
+        }
+
+        .tab-video,
+        .div-video {
+            width: 100%;
+            height: 0px;
+            -webkit-transition-property: height;
+            -moz-transition-property: height;
+            -o-transition-property: height;
+            -webkit-transition-duration: 2s;
+            -moz-transition-duration: 2s;
+            -o-transition-duration: 2s;
+        }
+
+        .label-align {
+            display: block;
+            padding-left: 15px;
+            text-indent: -15px;
+        }
+
+        .input-align {
+            width: 13px;
+            height: 13px;
+            padding: 0;
+            margin: 0;
+            vertical-align: bottom;
+            position: relative;
+            top: -1px;
+            *overflow: hidden;
+        }
+
+        .glass-panel {
+            z-index: 99;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            top: 0;
+            left: 0;
+            opacity: 0.8;
+            background-color: Gray;
+        }
+
+        .div-keypad {
+            z-index: 100;
+            position: fixed;
+            -moz-transition-property: width;
+            -o-transition-property: width;
+            -webkit-transition-duration: 2s;
+            -moz-transition-duration: 2s;
+            -o-transition-duration: 2s;
+        }
+
+        .previewvideo {
+            position: absolute;
+            width: 88px;
+            height: 72px;
+            margin-top: -42px;
+        }
+    </style>
+    <link href="./assets/css/bootstrap-responsive.css" rel="stylesheet"/>
+    <script type="text/javascript" src="WebPhone.js"></script>
+    <!-- Javascript code -->
+    <script type="text/javascript">
+        var oNotifICall;
+        var bDisableVideo = false;
+        var oReadyStateTimer;
+
+        window.onload = function () {
+            window.console && window.console.info && window.console.info("location=" + window.location);
+            divCallCtrl.onmousemove = onDivCallCtrlMouseMove;
+            loadCredentials();
+            loadCallOptions();
+            // Initialize call button
+            btnRegister.disabled = false;
+
+            uiBtnCallSetText("Call");
+            oReadyStateTimer = setInterval(function () {
+                        if (document.readyState === "complete") {
+                            clearInterval(oReadyStateTimer);
+                            WebPhone.preInit(
+                                    null, null, null, null, null, null,
+                                    document.getElementById("video_local"),
+                                    document.getElementById("video_remote"),
+                                    document.getElementById("audio_remote"));
+                        }
+                    },
+                    500);
+
+        }
+
+        //ui
+        function loadCallOptions() {
+            if (window.localStorage) {
+                var s_value;
+                if ((s_value = window.localStorage.getItem('org.yuntongxun.call.phone_number'))) txtPhoneNumber.value = s_value;
+                bDisableVideo = (window.localStorage.getItem('org.yuntongxun.expert.disable_video') == "true");
+
+                txtCallStatus.innerHTML = '<i>Video ' + (bDisableVideo ? 'disabled' : 'enabled') + '</i>';
+            }
+        }
+        //ui
+        function saveCallOptions() {
+            if (window.localStorage) {
+                window.localStorage.setItem('org.yuntongxun.call.phone_number', txtPhoneNumber.value);
+                window.localStorage.setItem('org.yuntongxun.expert.disable_video', bDisableVideo ? "true" : "false");
+            }
+        }
+        //加载保存信息
+        function loadCredentials() {
+            if (window.localStorage) {
+                // IE retuns 'null' if not defined
+                var s_value;
+                if ((s_value = window.localStorage.getItem('org.yuntongxun.identity.display_name'))) txtDisplayName.value = s_value;
+                if ((s_value = window.localStorage.getItem('org.yuntongxun.identity.impi'))) txtPrivateIdentity.value = s_value;
+                if ((s_value = window.localStorage.getItem('org.yuntongxun.identity.impu'))) txtPublicIdentity.value = s_value;
+                if ((s_value = window.localStorage.getItem('org.yuntongxun.identity.password'))) txtPassword.value = s_value;
+                if ((s_value = window.localStorage.getItem('org.yuntongxun.identity.realm'))) txtRealm.value = s_value;
+            }
+            else {
+            }
+        }
+        //信息保存
+        function saveCredentials() {
+            if (window.localStorage) {
+                window.localStorage.setItem('org.yuntongxun.identity.display_name', txtDisplayName.value);
+                window.localStorage.setItem('org.yuntongxun.identity.impi', txtPrivateIdentity.value);
+                window.localStorage.setItem('org.yuntongxun.identity.impu', txtPublicIdentity.value);
+                window.localStorage.setItem('org.yuntongxun.identity.password', txtPassword.value);
+                window.localStorage.setItem('org.yuntongxun.identity.realm', txtRealm.value);
+            }
+        }
+        //ui
+        function showNotifICall(s_number) {
+            // permission already asked when we registered
+            if (window.webkitNotifications && window.webkitNotifications.checkPermission() == 0) {
+                if (oNotifICall) {
+                    oNotifICall.cancel();
+                }
+                oNotifICall = window.webkitNotifications.createNotification('images/sipml-34x39.png', 'Incaming call', 'Incoming call from ' + s_number);
+                oNotifICall.onclose = function () {
+                    oNotifICall = null;
+                };
+                oNotifICall.show();
+            }
+        }
+        //ui
+        function onDivCallCtrlMouseMove(evt) {
+            try { // IE: DOM not ready
+                if (tsk_utils_have_stream()) {
+                    btnCall.disabled = (!tsk_utils_have_stream() || !WebPhone.oSipSessionRegister || !WebPhone.oSipSessionRegister.is_connected());
+                    document.getElementById("divCallCtrl").onmousemove = null; // unsubscribe
+                }
+            }
+            catch (e) {
+            }
+        }
+        //ui
+        function uiOnConnectionEvent(b_connected, b_connecting) { // should be enum: connecting, connected, terminating, terminated
+            btnRegister.disabled = b_connected || b_connecting;
+            btnUnRegister.disabled = !b_connected && !b_connecting;
+            btnCall.disabled = !(b_connected && tsk_utils_have_webrtc() && tsk_utils_have_stream());
+            btnHangUp.disabled = !WebPhone.oSipSessionCall;
+        }
+        //ui
+        function uiVideoDisplayEvent(b_local, b_added) {
+            var o_elt_video = b_local ? WebPhone.videoLocal : WebPhone.videoRemote;
+            if (b_added) {
+                o_elt_video.style.opacity = 1;
+                uiVideoDisplayShowHide(true);
+            }
+            else {
+                o_elt_video.style.opacity = 0;
+            }
+        }
+        //ui
+        function uiVideoDisplayShowHide(b_show) {
+            if (b_show) {
+                tdVideo.style.height = '340px';
+                divVideo.style.height = navigator.appName == 'Microsoft Internet Explorer' ? '100%' : '340px';
+            }
+            else {
+                tdVideo.style.height = '0px';
+                divVideo.style.height = '0px';
+            }
+
+        }
+        //ui
+        function uiBtnCallSetText(s_text) {
+            switch (s_text) {
+                case "Call":
+                {
+                    var bDisableCallBtnOptions = false;
+                    btnCall.value = btnCall.innerHTML = bDisableCallBtnOptions ? 'Call' : 'Call <span id="spanCaret" class="caret">';
+                    btnCall.setAttribute("class", bDisableCallBtnOptions ? "btn btn-primary" : "btn btn-primary dropdown-toggle");
+                    btnCall.onclick = bDisableCallBtnOptions ? function () {
+                        WebPhone.sipCall(bDisableVideo ? 'call-audio' : 'call-audiovideo');
+                    } : null;
+                    ulCallOptions.style.visibility = bDisableCallBtnOptions ? "hidden" : "visible";
+                    if (!bDisableCallBtnOptions && ulCallOptions.parentNode != divBtnCallGroup) {
+                        divBtnCallGroup.appendChild(ulCallOptions);
+                    }
+                    else if (bDisableCallBtnOptions && ulCallOptions.parentNode == divBtnCallGroup) {
+                        document.body.appendChild(ulCallOptions);
+                    }
+
+                    break;
+                }
+                default:
+                {
+                    btnCall.value = btnCall.innerHTML = s_text;
+                    btnCall.setAttribute("class", "btn btn-primary");
+                    btnCall.onclick = function () {
+                        WebPhone.sipCall(bDisableVideo ? 'call-audio' : 'call-audiovideo');
+                    };
+                    ulCallOptions.style.visibility = "hidden";
+                    if (ulCallOptions.parentNode == divBtnCallGroup) {
+                        document.body.appendChild(ulCallOptions);
+                    }
+                    break;
+                }
+            }
+        }
+        //ui
+        function uiCallTerminated(s_description) {
+            uiBtnCallSetText("Call");
+            btnHangUp.value = 'HangUp';
+            btnHoldResume.value = 'hold';
+            btnMute.value = "Mute";
+            btnCall.disabled = false;
+            btnHangUp.disabled = true;
+            WebPhone.stopRingbackTone();
+            WebPhone.stopRingTone();
+
+            txtCallStatus.innerHTML = "<i>" + s_description + "</i>";
+            uiVideoDisplayShowHide(false);
+            divCallOptions.style.opacity = 0;
+
+            if (oNotifICall) {
+                oNotifICall.cancel();
+                oNotifICall = null;
+            }
+
+            uiVideoDisplayEvent(false, false);
+            uiVideoDisplayEvent(true, false);
+
+            setTimeout(function () {
+                if (!WebPhone.oSipSessionCall) {
+                    txtCallStatus.innerHTML = '';
+                }
+            }, 2500);
+        }
+
+        WebPhone.addStackEvent("failed_to_stop", function (e) {
+            uiOnConnectionEvent(false, false);
+            uiVideoDisplayShowHide(false);
+            divCallOptions.style.opacity = 0;
+            txtCallStatus.innerHTML = '';
+            txtRegStatus.innerHTML = bFailure ? "<i>断开: <b>" + e.description + "</b></i>" : "<i>Disconnected</i>";
+        })
+
+        WebPhone.addStackEvent("i_new_call", function (e) {
+            uiBtnCallSetText('Answer');
+            btnHangUp.value = 'Reject';
+            btnCall.disabled = false;
+            btnHangUp.disabled = false;
+            WebPhone.startRingTone();
+            var sRemoteNumber = (WebPhone.oSipSessionCall.getRemoteFriendlyName() || 'unknown');
+            showNotifICall(sRemoteNumber);
+        })
+
+        WebPhone.addStackEvent("m_permission_requested", function (e) {
+            divGlassPanel.style.visibility = 'visible';
+        })
+
+        WebPhone.addStackEvent("m_permission_accepted", function (e) {
+            divGlassPanel.style.visibility = 'hidden';
+        })
+
+        WebPhone.addStackEvent("m_permission_refused", function (e) {
+            divGlassPanel.style.visibility = 'hidden';
+            uiCallTerminated('Media stream permission denied');
+        })
+
+        WebPhone.addSessionEvent("connected", function (e) {
+            var bConnected = (e.type == 'connected');
+            if (e.session == WebPhone.oSipSessionRegister) {
+                uiOnConnectionEvent(bConnected, !bConnected);
+                txtRegStatus.innerHTML = "<i>" + e.description + "</i>";
+            } else {
+                btnHangUp.value = 'HangUp';
+                btnCall.disabled = true;
+                btnHangUp.disabled = false;
+                btnTransfer.disabled = false;
+                if (bConnected) {
+                    if (oNotifICall) {
+                        oNotifICall.cancel();
+                        oNotifICall = null;
+                    }
+                }
+                txtCallStatus.innerHTML = "<i>" + e.description + "</i>";
+                divCallOptions.style.opacity = bConnected ? 1 : 0;
+                if (SIPml.isWebRtc4AllSupported()) { // IE don't provide stream callback
+                    uiVideoDisplayEvent(false, true);
+                    uiVideoDisplayEvent(true, true);
+                }
+            }
+        })
+
+        WebPhone.addSessionEvent("terminating", function (e) {
+            if (e.session == WebPhone.oSipSessionRegister) {
+                uiOnConnectionEvent(false, false);
+                txtRegStatus.innerHTML = "<i>" + e.description + "</i>";
+            } else if (e.session == WebPhone.oSipSessionCall) {
+                uiCallTerminated(e.description);
+            }
+        })
+
+        WebPhone.addSessionEvent("terminated", function (e) {
+            if (e.session == WebPhone.oSipSessionRegister) {
+                uiOnConnectionEvent(false, false);
+                txtRegStatus.innerHTML = "<i>" + e.description + "</i>";
+            }
+            uiCallTerminated(e.description);
+        })
+
+        WebPhone.addSessionEvent("m_stream_video_local_added", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                uiVideoDisplayEvent(true, true);
+            }
+        })
+
+        WebPhone.addSessionEvent("m_stream_video_local_removed", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                uiVideoDisplayEvent(true, false);
+            }
+        })
+
+        WebPhone.addSessionEvent("m_stream_video_remote_added", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                uiVideoDisplayEvent(false, true);
+            }
+        })
+        WebPhone.addSessionEvent("m_stream_video_remote_removed", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                uiVideoDisplayEvent(false, false);
+            }
+        })
+
+        WebPhone.addSessionEvent("m_stream_video_remote_removed", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                uiVideoDisplayEvent(false, false);
+            }
+        })
+
+        WebPhone.addSessionEvent("m_local_hold_ok", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                btnHoldResume.value = 'Resume';
+                btnHoldResume.disabled = false;
+                txtCallStatus.innerHTML = '<i>通话保持</i>';
+                oSipSessionCall.bHeld = true;
+            }
+        })
+
+        WebPhone.addSessionEvent("m_local_hold_nok", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                btnHoldResume.value = 'Hold';
+                btnHoldResume.disabled = false;
+                txtCallStatus.innerHTML = '<i>通话保持失败</i>';
+            }
+        })
+
+        WebPhone.addSessionEvent("m_local_resume_ok", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                btnHoldResume.value = 'Hold';
+                btnHoldResume.disabled = false;
+                txtCallStatus.innerHTML = '<i>通话恢复</i>';
+                oSipSessionCall.bHeld = false;
+
+                if (SIPml.isWebRtc4AllSupported()) { // IE don't provide stream callback yet
+                    uiVideoDisplayEvent(false, true);
+                    uiVideoDisplayEvent(true, true);
+                }
+            }
+        })
+
+        WebPhone.addSessionEvent("m_local_resume_nok", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                btnHoldResume.disabled = false;
+                txtCallStatus.innerHTML = '<i>恢复通话失败</i>';
+            }
+        })
+
+        WebPhone.addSessionEvent("m_remote_hold", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                txtCallStatus.innerHTML = '<i>远端通话保持</i>';
+            }
+        })
+
+        WebPhone.addSessionEvent("m_remote_resume", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                txtCallStatus.innerHTML = '<i>远端恢复通话</i>';
+            }
+        })
+
+        WebPhone.addSessionEvent("o_ect_trying", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                txtCallStatus.innerHTML = '<i>呼叫转接中...</i>';
+            }
+        })
+
+        WebPhone.addSessionEvent("o_ect_accepted", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                txtCallStatus.innerHTML = '<i>呼叫转接接听</i>';
+            }
+        })
+
+        WebPhone.addSessionEvent("i_ect_completed", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                txtCallStatus.innerHTML = '<i>呼叫转接结束</i>';
+                btnTransfer.disabled = false;
+            }
+        })
+
+        WebPhone.addSessionEvent("i_ect_failed", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                txtCallStatus.innerHTML = '<i>Call transfer failed</i>';
+                btnTransfer.disabled = false;
+            }
+        })
+
+        WebPhone.addSessionEvent("i_ect_notify", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                txtCallStatus.innerHTML = "<i>转接: <b>" + e.getSipResponseCode() + " " + e.description + "</b></i>";
+                if (e.getSipResponseCode() >= 300) {
+                    btnTransfer.disabled = false;
+                }
+            }
+        })
+
+        WebPhone.addSessionEvent("i_ect_requested", function (e) {
+            if (e.session == WebPhone.oSipSessionCall) {
+                var s_message = "是否转接到 [" + e.getTransferDestinationFriendlyName() + "]?";
+                if (confirm(s_message)) {
+                    txtCallStatus.innerHTML = "<i>转接中...</i>";
+                    WebPhone.oSipSessionCall.acceptTransfer();
+                    return;
+                }
+                WebPhone.oSipSessionCall.rejectTransfer();
+            }
+        })
+
+        function sipRegister() {
+            WebPhone.sipRegister(txtRealm.value, txtPrivateIdentity.value, txtPublicIdentity.value, txtPassword.value, txtDisplayName.value, txtWebsocketUrl.value, txtICEServer.value);
+        }
+        function sipCallAudio() {
+            WebPhone.sipCall(txtPhoneNumber.value);
+        }
+
+        function sipCallVideo() {
+            WebPhone.sipCall(txtPhoneNumber.value);
+        }
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="row-fluid">
+        <div class="span4 well">
+            <label style="width: 100%;" align="center" id="txtRegStatus"> </label>
+
+            <h2>
+                注册
+            </h2>
+            <br/>
+            <table style='width: 100%'>
+                <tr>
+                    <td>
+                        <label style="height: 100%">
+                            用户名:
+                        </label>
+                    </td>
+                    <td>
+                        <input type="text" style="width: 100%; height: 100%" id="txtDisplayName" value="800000001007"
+                               placeholder="1000"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label style="height: 100%">
+                            SIP ID:
+                        </label>
+                    </td>
+                    <td>
+                        <input type="text" style="width: 100%; height: 100%" id="txtPrivateIdentity" value="800000001007"
+                               placeholder="1000"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label style="height: 100%">
+                            SIP URI:
+                        </label>
+                    </td>
+                    <td>
+                        <input type="text" style="width: 100%; height: 100%" id="txtPublicIdentity" value="sip:800000001007@222.36.4.254:8880"
+                               placeholder="sip:1000@222.36.4.254:8880"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label style="height: 100%">密码:</label>
+                    </td>
+                    <td>
+                        <input type="password" style="width: 100%; height: 100%" id="txtPassword" value="100000001007"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <label style="height: 100%">域名:</label>
+                    </td>
+                    <td>
+                        <input type="text" style="width: 100%; height: 100%" id="txtRealm" value="222.36.4.254:8880" placeholder="222.36.4.254:8880"/>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <label style="height: 100%">Websocket URL:</label>
+                    </td>
+                    <td>
+                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="wss://222.36.4.254:4443" placeholder="wss://222.36.4.254:4443"/>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <label style="height: 100%">ICE Servers:</label>
+                    </td>
+                    <td>
+                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{url:'stun:222.36.4.254:3478'}]" placeholder="[{url:'stun:222.36.4.254:3478'}]"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" align="right">
+                        <input type="button" class="btn btn-success" id="btnRegister" value="登陆" disabled onclick='sipRegister();'/>
+                        &nbsp;
+                        <input type="button" class="btn btn-danger" id="btnUnRegister" value="注销" disabled onclick='WebPhone.sipUnRegister();'/>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div id="divCallCtrl" class="span7 well" style='display:table-cell; vertical-align:middle'>
+            <label style="width: 100%;" align="center" id="txtCallStatus">
+            </label>
+
+            <h2>
+                呼叫控制
+            </h2>
+            <br/>
+            <table style='width: 100%;'>
+                <tr>
+                    <td style="white-space:nowrap;">
+                        <input type="text" style="width: 100%; height:100%;" id="txtPhoneNumber" value="sip:800000001006@222.36.4.254:8880" placeholder="输入呼叫SIP URI"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="1" align="right">
+                        <div class="btn-toolbar" style="margin: 0; vertical-align:middle">
+                            <div id="divBtnCallGroup" class="btn-group">
+                                <button id="btnCall" disabled class="btn btn-primary" data-toggle="dropdown">Call</button>
+                            </div>
+                            &nbsp;&nbsp;
+                            <div class="btn-group">
+                                <input type="button" id="btnHangUp" style="margin: 0; vertical-align:middle; height: 100%;" class="btn btn-primary" value="挂机" onclick='WebPhone.sipHangUp();'
+                                       disabled/>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td id="tdVideo" class='tab-video'>
+                        <div id="divVideo" class='div-video'>
+                            <div id="divVideoRemote" style='position:relative; border:1px solid #009; height:100%; width:100%; z-index: auto; opacity: 1'>
+                                <video class="video" width="100%" height="100%" id="video_remote" autoplay="autoplay" style="opacity: 0;
+                                        background-color: #000000; -webkit-transition-property: opacity; -webkit-transition-duration: 2s;"></video>
+                            </div>
+
+                            <div id="divVideoLocalWrapper" style="margin-left: 0px; border:0px solid #009; z-index: 1000">
+                                <iframe class="previewvideo" style="border:0px solid #009; z-index: 1000"></iframe>
+                                <div id="divVideoLocal" class="previewvideo" style=' border:0px solid #009; z-index: 1000'>
+                                    <video class="video" width="100%" height="100%" id="video_local" autoplay="autoplay" muted="true" style="opacity: 0;
+                                            background-color: #000000; -webkit-transition-property: opacity;
+                                            -webkit-transition-duration: 2s;"></video>
+                                </div>
+                            </div>
+                            <div id="divScreencastLocalWrapper" style="margin-left: 90px; border:0px solid #009; z-index: 1000">
+                                <iframe class="previewvideo" style="border:0px solid #009; z-index: 1000"></iframe>
+                                <div id="divScreencastLocal" class="previewvideo" style=' border:0px solid #009; z-index: 1000'>
+                                </div>
+                            </div>
+
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td align='center'>
+                        <div id='divCallOptions' class='call-options' style='opacity: 0; margin-top: 0px'>
+
+                            <input type="button" class="btn" style="" id="btnMute" value="Mute" onclick='WebPhone.sipToggleMute();'/> &nbsp;
+                            <input type="button" class="btn" style="" id="btnHoldResume" value="Hold" onclick='WebPhone.sipToggleHoldResume();'/> &nbsp;
+                            <input type="button" class="btn" style="" id="btnTransfer" value="Transfer" onclick='WebPhone.sipTransfer();'/> &nbsp;
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <br/>
+    <footer>
+
+        <!-- Creates all ATL/COM objects right now
+            Will open confirmation dialogs if not already done
+        -->
+        <object id="fakePluginInstance" classid="clsid:69E4A9D1-824C-40DA-9680-C7424A27B6A0" style="visibility:hidden;"></object>
+
+        <!--
+            NPAPI  browsers: Safari, Opera and Firefox
+        -->
+        <!--embed id="WebRtc4npapi" type="application/w4a" width='1' height='1' style='visibility:hidden;' /-->
+    </footer>
+</div>
+<!-- /container -->
+<!-- Glass Panel -->
+<div id='divGlassPanel' class='glass-panel' style='visibility:hidden'></div>
+
+<!-- Call button options -->
+<ul id="ulCallOptions" class="dropdown-menu" style="visibility:hidden">
+    <li><a href="#" onclick='sipCallAudio("call-audio");'>Audio</a></li>
+    <li><a href="#" onclick='sipCallVideo("call-audiovideo");'>Video</a></li>
+    <li class="divider"></li>
+</ul>
+
+<!-- Le javascript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script type="text/javascript" src="./assets/js/jquery.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-transition.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-alert.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-modal.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-dropdown.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-scrollspy.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-tab.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-tooltip.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-popover.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-button.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-collapse.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-carousel.js"></script>
+<script type="text/javascript" src="./assets/js/bootstrap-typeahead.js"></script>
+
+<!-- Audios -->
+<audio id="audio_remote" autoplay="autoplay"></audio>
+<audio id="ringtone" loop src="sounds/ringtone.wav"></audio>
+<audio id="ringbacktone" loop src="sounds/ringbacktone.wav"></audio>
+<audio id="dtmfTone" src="sounds/dtmf.wav"></audio>
+
+<!-- GOOGLE ANALYTICS -->
+<script type="text/javascript">
+    var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+    document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+</script>
+
+<script type="text/javascript">
+    try {
+        var pageTracker = _gat._getTracker("UA-6868621-19");
+        pageTracker._trackPageview();
+    } catch (err) {
+    }
+</script>
+
+</body>
+</html>
