@@ -1,6 +1,9 @@
 (function () {
     window.WebPhone = window.WebPhone || {
+            _version: "2.0.2.11",
             _thisPath: "",
+
+            callid: null,
             _stackEvents: [],
             _SessionEvents: [],
             videoRemote: null, videoLocal: null, audioRemote: null,
@@ -22,7 +25,7 @@
              * @param s_za ZeroArtifacts
              * @param s_ndb NativeDebug
              */
-            preInit: function (s_webrtc_type, s_fps, s_mbwu, s_mbwd, s_za, s_ndb, videoRemote, videoLocal, audioRemote) {
+            Init: function (s_webrtc_type, s_fps, s_mbwu, s_mbwd, s_za, s_ndb, videoRemote, videoLocal, audioRemote) {
                 WebPhone.videoRemote = videoRemote;
                 WebPhone.videoLocal = videoLocal;
                 WebPhone.audioRemote = audioRemote;
@@ -82,7 +85,7 @@
              * @param txtWebsocketUrl
              * @param txtICEServer
              */
-            sipRegister: function (txtRealm, sipid, sipurl, pwd, txtDisplayName, txtWebsocketUrl, txtICEServer) {
+            Login: function (txtRealm, sipid, sipurl, pwd, txtDisplayName, txtWebsocketUrl, txtICEServer) {
                 // catch exception for IE (DOM not ready)
                 try {
                     SIPml.setDebugLevel("info");
@@ -110,22 +113,33 @@
                             ]
                         }
                     );
-                    if (WebPhone.oSipStack.start() != 0) {
+                    var result = WebPhone.oSipStack.start();
+                    if (result != 0) {
                         WebPhone.log('Failed to start the SIP stack')
                     }
+                    return result;
                 }
                 catch (e) {
                     WebPhone.log(e);
+                    return -1;
                 }
             },
             // 注销
-            sipUnRegister: function () {
+            Logout: function () {
                 if (WebPhone.oSipStack) {
                     WebPhone.oSipStack.stop(); // shutdown all sessions
                 }
+                return 0;
+            },
+            /**
+             * 获取版本号
+             * @returns {string}
+             */
+            getVersion: function () {
+                return WebPhone._version;
             },
             //呼叫
-            sipCall: function (called) {
+            MakeCall: function (called) {
                 if (WebPhone.oSipStack && !WebPhone.oSipSessionCall && !tsk_string_is_null_or_empty(called)) {
                     // create call session
                     WebPhone.oSipSessionCall = WebPhone.oSipStack.newSession('call-audio', WebPhone.oConfigCall);
@@ -139,23 +153,25 @@
                     WebPhone.log("Connecting");
                     WebPhone.oSipSessionCall.accept(WebPhone.oConfigCall);
                 }
+                return 0;
             },
             //摘机
-            answer: function () {
+            AnswerCall: function (callid) {
                 if (WebPhone.oSipSessionCall) {
                     WebPhone.log('Connecting...');
                     WebPhone.oSipSessionCall.accept(WebPhone.oConfigCall);
                 }
             },
             // 挂断 (SIP BYE or CANCEL)
-            sipHangUp: function () {
+            ClearCall: function (callid, reason) {
                 if (WebPhone.oSipSessionCall) {
                     WebPhone.log('Terminating the call...');
                     WebPhone.oSipSessionCall.hangup({events_listener: {events: '*', listener: WebPhone.onSipEventSession}});
                 }
+                return 0;
             },
             //发送DTMF
-            sipSendDTMF: function (c) {
+            SendDTMF: function (callid, c) {
                 if (WebPhone.oSipSessionCall && c) {
                     if (WebPhone.oSipSessionCall.dtmf(c) == 0) {
                         //try { dtmfTone.play(); } catch (e) { }
@@ -163,7 +179,7 @@
                 }
             },
             // 呼转
-            sipTransfer: function (s_destination) {
+            TransferCall: function (callid, s_destination) {
                 if (WebPhone.oSipSessionCall) {
                     if (!tsk_string_is_null_or_empty(s_destination)) {
                         if (WebPhone.oSipSessionCall.transfer(s_destination) != 0) {
@@ -184,6 +200,44 @@
                         WebPhone.log('Hold / Resume failed');
                         return;
                     }
+                }
+            },
+            /**
+             * 保持
+             * @param callid
+             * @returns {number}
+             * @constructor
+             */
+            HoldCall: function (callid) {
+                if (WebPhone.oSipSessionCall) {
+                    WebPhone.log(WebPhone.oSipSessionCall.bHeld ? 'Resuming the call...' : 'Holding the call...');
+                    if (WebPhone.oSipSessionCall.bHeld) {
+                        WebPhone.oSipSessionCall.hold();
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else {
+                    return 1;
+                }
+            },
+            /**
+             * 恢复
+             * @param callid
+             * @returns {number}
+             * @constructor
+             */
+            RetrieveCall: function (callid) {
+                if (WebPhone.oSipSessionCall) {
+                    WebPhone.log(WebPhone.oSipSessionCall.bHeld ? 'Resuming the call...' : 'Holding the call...');
+                    if (WebPhone.oSipSessionCall.bHeld) {
+                        WebPhone.oSipSessionCall.resume();
+                        return 0;
+                    } else {
+                        return 1;
+                    }
+                } else {
+                    return 2;
                 }
             },
             // 静音或恢复呼叫
@@ -288,6 +342,9 @@
                             WebPhone.startRingTone();
                             var sRemoteNumber = (WebPhone.oSipSessionCall.getRemoteFriendlyName() || 'unknown');
                             WebPhone.log("呼入号码为 [" + sRemoteNumber + "]");
+                            if (typeof(WebPhone.onReceived) == "function") {
+                                WebPhone.onReceived({"callid": null, "caller": sRemoteNumber});
+                            }
                         }
                         break;
                     }
@@ -334,8 +391,10 @@
                         var bConnected = (e.type == 'connected');
                         if (e.session == WebPhone.oSipSessionRegister) {
                             WebPhone.log("connecting || connected:" + e.description + "");
-                        }
-                        else if (e.session == WebPhone.oSipSessionCall) {
+                            if (typeof(WebPhone.onConnected) == "function") {
+                                WebPhone.onConnected();
+                            }
+                        } else if (e.session == WebPhone.oSipSessionCall) {
                             if (bConnected) {
                                 WebPhone.stopRingbackTone();
                                 WebPhone.stopRingTone();
@@ -371,12 +430,23 @@
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
                             var iSipResponseCode = e.getSipResponseCode();
+                            if (iSipResponseCode == 100) {
+                                if (typeof(WebPhone.onOriginated) == "function") {
+                                    WebPhone.onOriginated({"callid": null});
+                                }
+                            }
                             if (iSipResponseCode == 180 || iSipResponseCode == 183) {
                                 WebPhone.startRingbackTone();
                                 WebPhone.log('远端振铃...');
+                                if (typeof(WebPhone.onDelivered) == "function") {
+                                    WebPhone.onDelivered({"callid": null});
+                                }
                             }
                             if (iSipResponseCode == 200) {
                                 WebPhone.log("200");
+                                if (typeof(WebPhone.onEstablished) == "function") {
+                                    WebPhone.onEstablished({"callid": null});
+                                }
                             }
                         }
                         break;

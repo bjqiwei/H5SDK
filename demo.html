@@ -4,11 +4,7 @@
     <meta charset="utf-8"/>
     <title>live demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <!-- SIPML5 API:
-    DEBUG VERSION: 'SIPml-api.js'
-    RELEASE VERSION: 'release/SIPml-api.js'
-    -->
-    <script src="SIPml-api.js?svn=250" type="text/javascript"></script>
+    <script src="WebPhone-SIP.min.js" type="text/javascript"></script>
     <!-- Styles -->
     <link href="./assets/css/bootstrap.css" rel="stylesheet"/>
     <style type="text/css">
@@ -135,10 +131,10 @@
             oReadyStateTimer = setInterval(function () {
                         if (document.readyState === "complete") {
                             clearInterval(oReadyStateTimer);
-                            WebPhone.preInit(
+                            WebPhone.Init(
                                     null, null, null, null, null, null,
-                                    document.getElementById("video_local"),
-                                    document.getElementById("video_remote"),
+                                    null,
+                                    null,
                                     document.getElementById("audio_remote"));
                         }
                     },
@@ -208,8 +204,7 @@
                     btnCall.disabled = (!tsk_utils_have_stream() || !WebPhone.oSipSessionRegister || !WebPhone.oSipSessionRegister.is_connected());
                     document.getElementById("divCallCtrl").onmousemove = null; // unsubscribe
                 }
-            }
-            catch (e) {
+            } catch (e) {
             }
         }
         //ui
@@ -251,7 +246,7 @@
                     btnCall.value = btnCall.innerHTML = bDisableCallBtnOptions ? 'Call' : 'Call <span id="spanCaret" class="caret">';
                     btnCall.setAttribute("class", bDisableCallBtnOptions ? "btn btn-primary" : "btn btn-primary dropdown-toggle");
                     btnCall.onclick = bDisableCallBtnOptions ? function () {
-                        WebPhone.sipCall(bDisableVideo ? 'call-audio' : 'call-audiovideo');
+                        WebPhone.MakeCall(bDisableVideo ? 'call-audio' : 'call-audiovideo');
                     } : null;
                     ulCallOptions.style.visibility = bDisableCallBtnOptions ? "hidden" : "visible";
                     if (!bDisableCallBtnOptions && ulCallOptions.parentNode != divBtnCallGroup) {
@@ -268,7 +263,7 @@
                     btnCall.value = btnCall.innerHTML = s_text;
                     btnCall.setAttribute("class", "btn btn-primary");
                     btnCall.onclick = function () {
-                        WebPhone.sipCall(bDisableVideo ? 'call-audio' : 'call-audiovideo');
+                        WebPhone.MakeCall(bDisableVideo ? 'call-audio' : 'call-audiovideo');
                     };
                     ulCallOptions.style.visibility = "hidden";
                     if (ulCallOptions.parentNode == divBtnCallGroup) {
@@ -508,14 +503,18 @@
         })
 
         function sipRegister() {
-            WebPhone.sipRegister(txtRealm.value, txtPrivateIdentity.value, txtPublicIdentity.value, txtPassword.value, txtDisplayName.value, txtWebsocketUrl.value, txtICEServer.value);
+            WebPhone.Login(txtRealm.value, txtPrivateIdentity.value, txtPublicIdentity.value, txtPassword.value, txtDisplayName.value, txtWebsocketUrl.value, txtICEServer.value);
         }
         function sipCallAudio() {
-            WebPhone.sipCall(txtPhoneNumber.value);
+            WebPhone.MakeCall(txtPhoneNumber.value);
         }
 
         function sipCallVideo() {
-            WebPhone.sipCall(txtPhoneNumber.value);
+            WebPhone.MakeCall(txtPhoneNumber.value);
+        }
+
+        function TransferCall() {
+            WebPhone.TransferCall(null, txtPhoneNumber.value);
         }
     </script>
 </head>
@@ -601,7 +600,7 @@
                     <td colspan="2" align="right">
                         <input type="button" class="btn btn-success" id="btnRegister" value="登陆" disabled onclick='sipRegister();'/>
                         &nbsp;
-                        <input type="button" class="btn btn-danger" id="btnUnRegister" value="注销" disabled onclick='WebPhone.sipUnRegister();'/>
+                        <input type="button" class="btn btn-danger" id="btnUnRegister" value="注销" disabled onclick='WebPhone.Logout();'/>
                     </td>
                 </tr>
             </table>
@@ -628,7 +627,7 @@
                             </div>
                             &nbsp;&nbsp;
                             <div class="btn-group">
-                                <input type="button" id="btnHangUp" style="margin: 0; vertical-align:middle; height: 100%;" class="btn btn-primary" value="挂机" onclick='WebPhone.sipHangUp();'
+                                <input type="button" id="btnHangUp" style="margin: 0; vertical-align:middle; height: 100%;" class="btn btn-primary" value="挂机" onclick='WebPhone.ClearCall();'
                                        disabled/>
                             </div>
                         </div>
@@ -665,7 +664,7 @@
 
                             <input type="button" class="btn" style="" id="btnMute" value="Mute" onclick='WebPhone.sipToggleMute();'/> &nbsp;
                             <input type="button" class="btn" style="" id="btnHoldResume" value="Hold" onclick='WebPhone.sipToggleHoldResume();'/> &nbsp;
-                            <input type="button" class="btn" style="" id="btnTransfer" value="Transfer" onclick='WebPhone.sipTransfer();'/> &nbsp;
+                            <input type="button" class="btn" style="" id="btnTransfer" value="Transfer" onclick='TransferCall();'/> &nbsp;
                         </div>
                     </td>
                 </tr>
