@@ -188,7 +188,7 @@
                     btnCall.value = btnCall.innerHTML = s_text;
                     btnCall.setAttribute("class", "btn btn-primary");
                     btnCall.onclick = function () {
-                        WebPhone.MakeCall();
+                        WebPhone.AnswerCall();
                     };
                     ulCallOptions.style.visibility = "hidden";
                     if (ulCallOptions.parentNode == divBtnCallGroup) {
@@ -281,6 +281,8 @@
 			txtCallStatus.innerHTML = '<i>通话中</i>';
 			btnCall.disabled = true;
             btnHangUp.disabled = false;
+			document.getElementById("ringbacktone").pause();
+			document.getElementById("ringtone").pause();
 		}
 		
         WebPhone.onHeldFailed = function (e) {
