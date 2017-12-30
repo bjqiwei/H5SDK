@@ -206,8 +206,8 @@
             btnMute.value = "Mute";
             btnCall.disabled = false;
             btnHangUp.disabled = true;
-			document.getElementById("ringbacktone").stop();
-			document.getElementById("ringtone").stop();
+			document.getElementById("ringbacktone").pause();
+			document.getElementById("ringtone").pause();
 			
 
             txtCallStatus.innerHTML = "<i>" + s_description + "</i>";
@@ -224,6 +224,10 @@
             }, 2500);
         }
 
+		WebPhone.onMakeCallFailed = function(e){
+			uiCallTerminated(e.msg);
+		}
+		
         WebPhone.onReceived = function (e) {
             uiBtnCallSetText('Answer');
             btnHangUp.value = 'Reject';
@@ -240,20 +244,17 @@
             uiCallTerminated('Media stream permission denied');
         }
 
-        WebPhone.onConnected = function (e) {
-            var bConnected = true;
-            uiOnConnectionEvent(bConnected, !bConnected);
+        WebPhone.onConnected = function () {
+            uiOnConnectionEvent(true, false);
             txtRegStatus.innerHTML = "<i>" + "已登录" + "</i>";
         }
 
 		WebPhone.onConnectError = function (e) {
-            var bConnected = false;
-            uiOnConnectionEvent(bConnected, !bConnected);
-            txtRegStatus.innerHTML = "<i>" + e + "</i>";
+            uiOnConnectionEvent(false, false);
+            txtRegStatus.innerHTML = "<i>" + e.msg + "</i>";
         }
 
         WebPhone.onLogout = function () {
-            
             uiOnConnectionEvent(false, false);
             txtRegStatus.innerHTML = "<i>" + "已退出" + "</i>";
             uiCallTerminated("已退出");
@@ -302,6 +303,7 @@
 
         function sipRegister() {
             WebPhone.Login(txtRealm.value, txtPrivateIdentity.value, txtPublicIdentity.value, txtPassword.value, txtDisplayName.value, txtWebsocketUrl.value, txtICEServer.value);
+			uiOnConnectionEvent(false,true);
         }
         function sipCallAudio() {
             WebPhone.MakeCall(txtPhoneNumber.value);
@@ -352,7 +354,7 @@
                         </label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtPublicIdentity" value="sip:1001@192.168.177.178:7731"
+                        <input type="text" style="width: 100%; height: 100%" id="txtPublicIdentity" value="sip:1001@192.168.177.178:38890"
                                placeholder="sip:1000@222.36.4.254:8880"/>
                     </td>
                 </tr>
@@ -361,7 +363,7 @@
                         <label style="height: 100%">密码:</label>
                     </td>
                     <td>
-                        <input type="password" style="width: 100%; height: 100%" id="txtPassword" value="cloopen_password"/>
+                        <input type="password" style="width: 100%; height: 100%" id="txtPassword" value="123456"/>
                     </td>
                 </tr>
                 <tr>
@@ -378,7 +380,7 @@
                         <label style="height: 100%">Websocket URL:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="wss://192.168.177.178:7731" placeholder="wss://222.36.4.254:4443"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="ws://192.168.177.178:38899" placeholder="wss://222.36.4.254:4443"/>
                     </td>
                 </tr>
 
@@ -483,8 +485,8 @@
 <script type="text/javascript" src="./assets/js/bootstrap-typeahead.js"></script>
 
 <!-- Audios -->
-<audio id="ringtone" loop src="sounds/ringtone.wav"></audio>
-<audio id="ringbacktone" loop src="sounds/ringbacktone.wav"></audio>
+<audio id="ringtone" loop="true" src="sounds/ringtone.wav"></audio>
+<audio id="ringbacktone" loop="true" src="sounds/ringbacktone.wav"></audio>
 <audio id="dtmfTone" src="sounds/dtmf.wav"></audio>
 
 <!-- GOOGLE ANALYTICS -->

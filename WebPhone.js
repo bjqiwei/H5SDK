@@ -1,6 +1,6 @@
 (function () {
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.3.12",
+            _version: "2.0.3.13",
             _thisPath: "",
 
             callid: null,
@@ -88,7 +88,6 @@
                 this.oConfigCall = {
                     audio_remote: this.audioRemote,
                     bandwidth: {audio: undefined},
-                    events_listener: {events: '*', listener: this.onSipEventSession},
                     sip_caps: [
                         {name: '+g.oma.sip-im'},
                         {name: 'language', value: '\"en,fr\"'}
@@ -165,14 +164,25 @@
                     // create call session
                     WebPhone.oSipSessionCall = WebPhone.oSipStack.newSession('call-audio', WebPhone.oConfigCall);
                     // make call
-                    if (WebPhone.oSipSessionCall.call(called) != 0) {
+					var err = WebPhone.oSipSessionCall.call(called);
+                    if ( err != 0) {
                         WebPhone.oSipSessionCall = null;
                         WebPhone.log('Failed to make call');
+						if (typeof(WebPhone.onMakeCallFailed) == "function") {
+							var msg = {};
+							msg.reason = err;
+							msg.msg="make call failed";
+                            WebPhone.onMakeCallFailed(msg);
+							return err;
+                        }
                     }
                 }
-                else if (WebPhone.oSipSessionCall) {
-                    WebPhone.log("Connecting");
-                    WebPhone.oSipSessionCall.accept(WebPhone.oConfigCall);
+				if (typeof(WebPhone.onMakeCallFailed) == "function") {
+					var msg = {};
+					msg.reason = 1;
+					msg.msg="未注册";
+                    WebPhone.onMakeCallFailed(msg);
+					return 1;
                 }
                 return 0;
             },
@@ -187,7 +197,7 @@
             ClearCall: function (callid, reason) {
                 if (WebPhone.oSipSessionCall) {
                     WebPhone.log('Terminating the call...');
-                    WebPhone.oSipSessionCall.hangup({events_listener: {events: '*', listener: WebPhone.onSipEventSession}});
+                    WebPhone.oSipSessionCall.hangup({events_listener: {events: '*', listener: WebPhone.onSipSessionEvent}});
                 }
                 return 0;
             },
@@ -289,7 +299,7 @@
                         try {
                             WebPhone.oSipSessionRegister = WebPhone.oSipStack.newSession('register', {
                                 expires: 200,
-                                events_listener: {events: '*', listener: WebPhone.onSipEventSession},
+                                events_listener: {events: '*', listener: WebPhone.onSipSessionEvent},
                                 sip_caps: [
                                     {name: '+g.oma.sip-im', value: null},
                                     //{ name: '+sip.ice' },
@@ -305,21 +315,42 @@
                         break;
                     }
                     case 'stopping':
+					{
+						break;
+					}
                     case 'stopped':
+					{
+						WebPhone.oSipStack = null;
+                        WebPhone.oSipSessionRegister = null;
+                        WebPhone.oSipSessionCall = null;
+						if (typeof(WebPhone.onLogout) == "function") {
+                                WebPhone.onLogout();
+                        }
+						break;
+					}
+					
                     case 'failed_to_start':
-                    case 'failed_to_stop':
-                    {
+					{
                         var bFailure = (e.type == 'failed_to_start') || (e.type == 'failed_to_stop');
                         WebPhone.oSipStack = null;
                         WebPhone.oSipSessionRegister = null;
                         WebPhone.oSipSessionCall = null;
 						
+						var msg = {};
+						msg.reason=504;
+						msg.msg = e.description
 						if (typeof(WebPhone.onConnectError) == "function") {
-                            WebPhone.onConnectError(e.description);
+                            WebPhone.onConnectError(msg);
                         }
-                        WebPhone.log(bFailure ? "断开: <b>" + e.description + "</b>" : "Disconnected");
+                        WebPhone.log("断开: " + e.description);
                         break;
                     }
+					
+                    case 'failed_to_stop':
+					{
+						break;
+					}
+                    
                     case 'i_new_call':
                     {
                         if (WebPhone.oSipSessionCall) {
@@ -355,7 +386,7 @@
              * SIP请求回调函数 (INVITE, REGISTER, MESSAGE...)
              * @param e SIPml.Session.Event
              */
-            onSipEventSession: function (e) {
+            onSipSessionEvent: function (e) {
                 WebPhone.log("收到Session事件：" + e.type);
                 switch (e.type) {
                     case 'connecting':
@@ -381,9 +412,6 @@
                             WebPhone.log(e.description);
                         }
                         WebPhone.oSipSessionCall = null;
-						if (typeof(WebPhone.onLogout) == "function") {
-                                WebPhone.onLogout();
-                        }
 							
                         break;
                     }
