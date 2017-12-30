@@ -241,7 +241,7 @@
 
         WebPhone.onCallCleared = function (e) {
             divGlassPanel.style.visibility = 'hidden';
-            uiCallTerminated('Media stream permission denied');
+            uiCallTerminated(e.msg);
         }
 
         WebPhone.onConnected = function () {
@@ -257,7 +257,6 @@
         WebPhone.onLogout = function () {
             uiOnConnectionEvent(false, false);
             txtRegStatus.innerHTML = "<i>" + "已退出" + "</i>";
-            uiCallTerminated("已退出");
         }
 
 
@@ -269,6 +268,21 @@
             oSipSessionCall.bHeld = true;
         }
 
+		WebPhone.onOriginated = function(e){
+			txtCallStatus.innerHTML = '<i>外呼中</i>';
+		}
+		
+		WebPhone.onDelivered = function(e){
+			txtCallStatus.innerHTML = '<i>对方振铃</i>';
+		}
+		
+		WebPhone.onEstablished = function(e)
+		{
+			txtCallStatus.innerHTML = '<i>通话中</i>';
+			btnCall.disabled = true;
+            btnHangUp.disabled = false;
+		}
+		
         WebPhone.onHeldFailed = function (e) {
             btnHoldResume.value = 'Hold';
             btnHoldResume.disabled = false;
@@ -389,7 +403,7 @@
                         <label style="height: 100%">ICE Servers:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ urls:'turn:192.168.177.179', username: 'test',credential:'12#Test123'}]" placeholder="[{ urls:'turn:192.168.177.179', username: 'test',credential:'12#Test123'}]"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ url:'turn:192.168.177.179:3478', username: 'test',credential:'12#Test123'}]"/>
                     </td>
                 </tr>
                 <tr>
@@ -412,7 +426,7 @@
             <table style='width: 100%;'>
                 <tr>
                     <td style="white-space:nowrap;">
-                        <input type="text" style="width: 100%; height:100%;" id="txtPhoneNumber" value="sip:800000001006@222.36.4.254:8880" placeholder="输入呼叫SIP URI"/>
+                        <input type="text" style="width: 100%; height:100%;" id="txtPhoneNumber" value="1234" placeholder="输入呼叫SIP URI"/>
                     </td>
                 </tr>
                 <tr>
