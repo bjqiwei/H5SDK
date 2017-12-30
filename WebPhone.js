@@ -1,6 +1,6 @@
 (function () {
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.3.15",
+            _version: "2.0.3.16",
             _thisPath: "",
 
             callid: null,
@@ -413,20 +413,40 @@
                     {
                         if (e.session == WebPhone.oSipSessionRegister) {
                             WebPhone.oSipSessionRegister = null;
-                            WebPhone.log("登出成功");
-                            if (typeof(WebPhone.onLogout) == "function") {
-                                WebPhone.onLogout();
-                            }
+							if(e.o_event.o_message.line.response.i_status_code != 200)
+							{
+								WebPhone.log("登录失败:" + e.o_event.o_message.line.response.i_status_code);
+								if (typeof(WebPhone.onConnectError) == "function") {
+									var msg = {};
+									msg.reason = e.o_event.o_message.line.response.i_status_code;
+									msg.msg = e.description;
+									WebPhone.onConnectError(msg);
+								}
+							}
+							else{
+								WebPhone.log("登出成功");
+								if (typeof(WebPhone.onLogout) == "function") {
+									WebPhone.onLogout();
+								}
+							}
                             
                         }
                         
-                        if (e.session == WebPhone.oSipSessionCall && typeof(WebPhone.onCallCleared) == "function") {
+                        if (e.session == WebPhone.oSipSessionCall) {
                             WebPhone.oSipSessionCall = null;
-                            var msg ={};
-                            msg.callid=null;
-                            msg.msg = e.description;
-                            WebPhone.log("通话已挂断");
-                            WebPhone.onCallCleared(msg);
+							if(typeof(WebPhone.onCallCleared) == "function"){
+								var msg ={};
+								msg.callid=null;
+								msg.msg = e.description;
+								msg.reason = 200;
+								try{
+									msg.reason = e.o_event.o_message.line.response.i_status_code;
+								}
+								catch (e){
+								}
+								WebPhone.log("通话已挂断:" + msg.reason);
+								WebPhone.onCallCleared(msg);
+							}
                         }    
                         break;
                     }
