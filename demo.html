@@ -1,10 +1,8 @@
-﻿<!DOCTYPE html>
-<html>
+﻿<html>
 <head>
     <meta charset="utf-8"/>
     <title>live demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <script src="WebPhone-SIP.min.js" type="text/javascript"></script>
     <!-- Styles -->
     <link href="./assets/css/bootstrap.css" rel="stylesheet"/>
     <style type="text/css">
@@ -52,18 +50,6 @@
             -o-transition-duration: 2s;
         }
 
-        .tab-video,
-        .div-video {
-            width: 100%;
-            height: 0px;
-            -webkit-transition-property: height;
-            -moz-transition-property: height;
-            -o-transition-property: height;
-            -webkit-transition-duration: 2s;
-            -moz-transition-duration: 2s;
-            -o-transition-duration: 2s;
-        }
-
         .label-align {
             display: block;
             padding-left: 15px;
@@ -104,26 +90,17 @@
             -o-transition-duration: 2s;
         }
 
-        .previewvideo {
-            position: absolute;
-            width: 88px;
-            height: 72px;
-            margin-top: -42px;
-        }
     </style>
     <link href="./assets/css/bootstrap-responsive.css" rel="stylesheet"/>
     <script type="text/javascript" src="WebPhone.js"></script>
     <!-- Javascript code -->
     <script type="text/javascript">
         var oNotifICall;
-        var bDisableVideo = false;
         var oReadyStateTimer;
 
         window.onload = function () {
             window.console && window.console.info && window.console.info("location=" + window.location);
-            divCallCtrl.onmousemove = onDivCallCtrlMouseMove;
             loadCredentials();
-            loadCallOptions();
             // Initialize call button
             btnRegister.disabled = false;
 
@@ -131,34 +108,14 @@
             oReadyStateTimer = setInterval(function () {
                         if (document.readyState === "complete") {
                             clearInterval(oReadyStateTimer);
-                            WebPhone.Init(
-                                    null, null, null, null, null, null,
-                                    null,
-                                    null,
-                                    document.getElementById("audio_remote"));
+							WebPhone.setLogLevel("debug");
+                            WebPhone.Init();
                         }
                     },
                     500);
 
         }
 
-        //ui
-        function loadCallOptions() {
-            if (window.localStorage) {
-                var s_value;
-                if ((s_value = window.localStorage.getItem('org.yuntongxun.call.phone_number'))) txtPhoneNumber.value = s_value;
-                bDisableVideo = (window.localStorage.getItem('org.yuntongxun.expert.disable_video') == "true");
-
-                txtCallStatus.innerHTML = '<i>Video ' + (bDisableVideo ? 'disabled' : 'enabled') + '</i>';
-            }
-        }
-        //ui
-        function saveCallOptions() {
-            if (window.localStorage) {
-                window.localStorage.setItem('org.yuntongxun.call.phone_number', txtPhoneNumber.value);
-                window.localStorage.setItem('org.yuntongxun.expert.disable_video', bDisableVideo ? "true" : "false");
-            }
-        }
         //加载保存信息
         function loadCredentials() {
             if (window.localStorage) {
@@ -197,45 +154,13 @@
                 oNotifICall.show();
             }
         }
-        //ui
-        function onDivCallCtrlMouseMove(evt) {
-            try { // IE: DOM not ready
-                if (tsk_utils_have_stream()) {
-                    btnCall.disabled = (!tsk_utils_have_stream() || !WebPhone.oSipSessionRegister || !WebPhone.oSipSessionRegister.is_connected());
-                    document.getElementById("divCallCtrl").onmousemove = null; // unsubscribe
-                }
-            } catch (e) {
-            }
-        }
+
         //ui
         function uiOnConnectionEvent(b_connected, b_connecting) { // should be enum: connecting, connected, terminating, terminated
             btnRegister.disabled = b_connected || b_connecting;
             btnUnRegister.disabled = !b_connected && !b_connecting;
-            btnCall.disabled = !(b_connected && tsk_utils_have_webrtc() && tsk_utils_have_stream());
-            btnHangUp.disabled = !WebPhone.oSipSessionCall;
-        }
-        //ui
-        function uiVideoDisplayEvent(b_local, b_added) {
-            var o_elt_video = b_local ? WebPhone.videoLocal : WebPhone.videoRemote;
-            if (b_added) {
-                o_elt_video.style.opacity = 1;
-                uiVideoDisplayShowHide(true);
-            }
-            else {
-                o_elt_video.style.opacity = 0;
-            }
-        }
-        //ui
-        function uiVideoDisplayShowHide(b_show) {
-            if (b_show) {
-                tdVideo.style.height = '340px';
-                divVideo.style.height = navigator.appName == 'Microsoft Internet Explorer' ? '100%' : '340px';
-            }
-            else {
-                tdVideo.style.height = '0px';
-                divVideo.style.height = '0px';
-            }
-
+            btnCall.disabled = !(b_connected);
+            btnHangUp.disabled = true;
         }
         //ui
         function uiBtnCallSetText(s_text) {
@@ -246,7 +171,7 @@
                     btnCall.value = btnCall.innerHTML = bDisableCallBtnOptions ? 'Call' : 'Call <span id="spanCaret" class="caret">';
                     btnCall.setAttribute("class", bDisableCallBtnOptions ? "btn btn-primary" : "btn btn-primary dropdown-toggle");
                     btnCall.onclick = bDisableCallBtnOptions ? function () {
-                        WebPhone.MakeCall(bDisableVideo ? 'call-audio' : 'call-audiovideo');
+                        WebPhone.MakeCall();
                     } : null;
                     ulCallOptions.style.visibility = bDisableCallBtnOptions ? "hidden" : "visible";
                     if (!bDisableCallBtnOptions && ulCallOptions.parentNode != divBtnCallGroup) {
@@ -263,7 +188,7 @@
                     btnCall.value = btnCall.innerHTML = s_text;
                     btnCall.setAttribute("class", "btn btn-primary");
                     btnCall.onclick = function () {
-                        WebPhone.MakeCall(bDisableVideo ? 'call-audio' : 'call-audiovideo');
+                        WebPhone.MakeCall();
                     };
                     ulCallOptions.style.visibility = "hidden";
                     if (ulCallOptions.parentNode == divBtnCallGroup) {
@@ -281,11 +206,11 @@
             btnMute.value = "Mute";
             btnCall.disabled = false;
             btnHangUp.disabled = true;
-            WebPhone.stopRingbackTone();
-            WebPhone.stopRingTone();
+			document.getElementById("ringbacktone").stop();
+			document.getElementById("ringtone").stop();
+			
 
             txtCallStatus.innerHTML = "<i>" + s_description + "</i>";
-            uiVideoDisplayShowHide(false);
             divCallOptions.style.opacity = 0;
 
             if (oNotifICall) {
@@ -293,223 +218,92 @@
                 oNotifICall = null;
             }
 
-            uiVideoDisplayEvent(false, false);
-            uiVideoDisplayEvent(true, false);
 
             setTimeout(function () {
-                if (!WebPhone.oSipSessionCall) {
-                    txtCallStatus.innerHTML = '';
-                }
+               txtCallStatus.innerHTML = '';
             }, 2500);
         }
 
-        WebPhone.addStackEvent("failed_to_stop", function (e) {
-            uiOnConnectionEvent(false, false);
-            uiVideoDisplayShowHide(false);
-            divCallOptions.style.opacity = 0;
-            txtCallStatus.innerHTML = '';
-            txtRegStatus.innerHTML = bFailure ? "<i>断开: <b>" + e.description + "</b></i>" : "<i>Disconnected</i>";
-        })
-
-        WebPhone.addStackEvent("i_new_call", function (e) {
+        WebPhone.onReceived = function (e) {
             uiBtnCallSetText('Answer');
             btnHangUp.value = 'Reject';
             btnCall.disabled = false;
             btnHangUp.disabled = false;
-            WebPhone.startRingTone();
-            var sRemoteNumber = (WebPhone.oSipSessionCall.getRemoteFriendlyName() || 'unknown');
+            document.getElementById("ringtone").play();
+            var sRemoteNumber = (e.caller || 'unknown');
             showNotifICall(sRemoteNumber);
-        })
+        }
 
-        WebPhone.addStackEvent("m_permission_requested", function (e) {
-            divGlassPanel.style.visibility = 'visible';
-        })
 
-        WebPhone.addStackEvent("m_permission_accepted", function (e) {
-            divGlassPanel.style.visibility = 'hidden';
-        })
-
-        WebPhone.addStackEvent("m_permission_refused", function (e) {
+        WebPhone.onCallCleared = function (e) {
             divGlassPanel.style.visibility = 'hidden';
             uiCallTerminated('Media stream permission denied');
-        })
+        }
 
-        WebPhone.addSessionEvent("connected", function (e) {
-            var bConnected = (e.type == 'connected');
-            if (e.session == WebPhone.oSipSessionRegister) {
-                uiOnConnectionEvent(bConnected, !bConnected);
-                txtRegStatus.innerHTML = "<i>" + e.description + "</i>";
-            } else {
-                btnHangUp.value = 'HangUp';
-                btnCall.disabled = true;
-                btnHangUp.disabled = false;
-                btnTransfer.disabled = false;
-                if (bConnected) {
-                    if (oNotifICall) {
-                        oNotifICall.cancel();
-                        oNotifICall = null;
-                    }
-                }
-                txtCallStatus.innerHTML = "<i>" + e.description + "</i>";
-                divCallOptions.style.opacity = bConnected ? 1 : 0;
-                if (SIPml.isWebRtc4AllSupported()) { // IE don't provide stream callback
-                    uiVideoDisplayEvent(false, true);
-                    uiVideoDisplayEvent(true, true);
-                }
-            }
-        })
+        WebPhone.onConnected = function (e) {
+            var bConnected = true;
+            uiOnConnectionEvent(bConnected, !bConnected);
+            txtRegStatus.innerHTML = "<i>" + "已登录" + "</i>";
+        }
 
-        WebPhone.addSessionEvent("terminating", function (e) {
-            if (e.session == WebPhone.oSipSessionRegister) {
-                uiOnConnectionEvent(false, false);
-                txtRegStatus.innerHTML = "<i>" + e.description + "</i>";
-            } else if (e.session == WebPhone.oSipSessionCall) {
-                uiCallTerminated(e.description);
-            }
-        })
+		WebPhone.onConnectError = function (e) {
+            var bConnected = false;
+            uiOnConnectionEvent(bConnected, !bConnected);
+            txtRegStatus.innerHTML = "<i>" + e + "</i>";
+        }
 
-        WebPhone.addSessionEvent("terminated", function (e) {
-            if (e.session == WebPhone.oSipSessionRegister) {
-                uiOnConnectionEvent(false, false);
-                txtRegStatus.innerHTML = "<i>" + e.description + "</i>";
-            }
-            uiCallTerminated(e.description);
-        })
+        WebPhone.onLogout = function () {
+            
+            uiOnConnectionEvent(false, false);
+            txtRegStatus.innerHTML = "<i>" + "已退出" + "</i>";
+            uiCallTerminated("已退出");
+        }
 
-        WebPhone.addSessionEvent("m_stream_video_local_added", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                uiVideoDisplayEvent(true, true);
-            }
-        })
 
-        WebPhone.addSessionEvent("m_stream_video_local_removed", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                uiVideoDisplayEvent(true, false);
-            }
-        })
 
-        WebPhone.addSessionEvent("m_stream_video_remote_added", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                uiVideoDisplayEvent(false, true);
-            }
-        })
-        WebPhone.addSessionEvent("m_stream_video_remote_removed", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                uiVideoDisplayEvent(false, false);
-            }
-        })
+        WebPhone.onHeld = function (e) {
+            btnHoldResume.value = 'Resume';
+            btnHoldResume.disabled = false;
+            txtCallStatus.innerHTML = '<i>通话保持</i>';
+            oSipSessionCall.bHeld = true;
+        }
 
-        WebPhone.addSessionEvent("m_stream_video_remote_removed", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                uiVideoDisplayEvent(false, false);
-            }
-        })
+        WebPhone.onHeldFailed = function (e) {
+            btnHoldResume.value = 'Hold';
+            btnHoldResume.disabled = false;
+            txtCallStatus.innerHTML = '<i>通话保持失败</i>';
+        }
 
-        WebPhone.addSessionEvent("m_local_hold_ok", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                btnHoldResume.value = 'Resume';
-                btnHoldResume.disabled = false;
-                txtCallStatus.innerHTML = '<i>通话保持</i>';
-                oSipSessionCall.bHeld = true;
-            }
-        })
+        WebPhone.onRetrieved = function (e) {
+ 
+            btnHoldResume.value = 'Hold';
+            btnHoldResume.disabled = false;
+            txtCallStatus.innerHTML = '<i>通话恢复</i>';
+            
+        }
 
-        WebPhone.addSessionEvent("m_local_hold_nok", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                btnHoldResume.value = 'Hold';
-                btnHoldResume.disabled = false;
-                txtCallStatus.innerHTML = '<i>通话保持失败</i>';
-            }
-        })
+        WebPhone.onRetrieveFailed = function (e) {
+            btnHoldResume.disabled = false;
+            txtCallStatus.innerHTML = '<i>恢复通话失败</i>';
+        }
 
-        WebPhone.addSessionEvent("m_local_resume_ok", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                btnHoldResume.value = 'Hold';
-                btnHoldResume.disabled = false;
-                txtCallStatus.innerHTML = '<i>通话恢复</i>';
-                oSipSessionCall.bHeld = false;
 
-                if (SIPml.isWebRtc4AllSupported()) { // IE don't provide stream callback yet
-                    uiVideoDisplayEvent(false, true);
-                    uiVideoDisplayEvent(true, true);
-                }
-            }
-        })
+        WebPhone.onTransferred = function (e) {
+            txtCallStatus.innerHTML = '<i>呼叫转接结束</i>';
+            btnTransfer.disabled = false;
+        }
 
-        WebPhone.addSessionEvent("m_local_resume_nok", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                btnHoldResume.disabled = false;
-                txtCallStatus.innerHTML = '<i>恢复通话失败</i>';
-            }
-        })
+        WebPhone.onTransferFailed = function (e) {
+            txtCallStatus.innerHTML = '<i>Call transfer failed</i>';
+            btnTransfer.disabled = false;
+        }
 
-        WebPhone.addSessionEvent("m_remote_hold", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                txtCallStatus.innerHTML = '<i>远端通话保持</i>';
-            }
-        })
 
-        WebPhone.addSessionEvent("m_remote_resume", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                txtCallStatus.innerHTML = '<i>远端恢复通话</i>';
-            }
-        })
-
-        WebPhone.addSessionEvent("o_ect_trying", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                txtCallStatus.innerHTML = '<i>呼叫转接中...</i>';
-            }
-        })
-
-        WebPhone.addSessionEvent("o_ect_accepted", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                txtCallStatus.innerHTML = '<i>呼叫转接接听</i>';
-            }
-        })
-
-        WebPhone.addSessionEvent("i_ect_completed", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                txtCallStatus.innerHTML = '<i>呼叫转接结束</i>';
-                btnTransfer.disabled = false;
-            }
-        })
-
-        WebPhone.addSessionEvent("i_ect_failed", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                txtCallStatus.innerHTML = '<i>Call transfer failed</i>';
-                btnTransfer.disabled = false;
-            }
-        })
-
-        WebPhone.addSessionEvent("i_ect_notify", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                txtCallStatus.innerHTML = "<i>转接: <b>" + e.getSipResponseCode() + " " + e.description + "</b></i>";
-                if (e.getSipResponseCode() >= 300) {
-                    btnTransfer.disabled = false;
-                }
-            }
-        })
-
-        WebPhone.addSessionEvent("i_ect_requested", function (e) {
-            if (e.session == WebPhone.oSipSessionCall) {
-                var s_message = "是否转接到 [" + e.getTransferDestinationFriendlyName() + "]?";
-                if (confirm(s_message)) {
-                    txtCallStatus.innerHTML = "<i>转接中...</i>";
-                    WebPhone.oSipSessionCall.acceptTransfer();
-                    return;
-                }
-                WebPhone.oSipSessionCall.rejectTransfer();
-            }
-        })
 
         function sipRegister() {
             WebPhone.Login(txtRealm.value, txtPrivateIdentity.value, txtPublicIdentity.value, txtPassword.value, txtDisplayName.value, txtWebsocketUrl.value, txtICEServer.value);
         }
         function sipCallAudio() {
-            WebPhone.MakeCall(txtPhoneNumber.value);
-        }
-
-        function sipCallVideo() {
             WebPhone.MakeCall(txtPhoneNumber.value);
         }
 
@@ -536,7 +330,7 @@
                         </label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtDisplayName" value="800000001007"
+                        <input type="text" style="width: 100%; height: 100%" id="txtDisplayName" value="1001"
                                placeholder="1000"/>
                     </td>
                 </tr>
@@ -547,7 +341,7 @@
                         </label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtPrivateIdentity" value="800000001007"
+                        <input type="text" style="width: 100%; height: 100%" id="txtPrivateIdentity" value="1001"
                                placeholder="1000"/>
                     </td>
                 </tr>
@@ -558,7 +352,7 @@
                         </label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtPublicIdentity" value="sip:800000001007@222.36.4.254:8880"
+                        <input type="text" style="width: 100%; height: 100%" id="txtPublicIdentity" value="sip:1001@192.168.177.178:7731"
                                placeholder="sip:1000@222.36.4.254:8880"/>
                     </td>
                 </tr>
@@ -567,7 +361,7 @@
                         <label style="height: 100%">密码:</label>
                     </td>
                     <td>
-                        <input type="password" style="width: 100%; height: 100%" id="txtPassword" value="100000001007"/>
+                        <input type="password" style="width: 100%; height: 100%" id="txtPassword" value="cloopen_password"/>
                     </td>
                 </tr>
                 <tr>
@@ -575,7 +369,7 @@
                         <label style="height: 100%">域名:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtRealm" value="222.36.4.254:8880" placeholder="222.36.4.254:8880"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtRealm" value="192.168.177.178:38890" placeholder="222.36.4.254:8880"/>
                     </td>
                 </tr>
 
@@ -584,7 +378,7 @@
                         <label style="height: 100%">Websocket URL:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="wss://222.36.4.254:4443" placeholder="wss://222.36.4.254:4443"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="wss://192.168.177.178:7731" placeholder="wss://222.36.4.254:4443"/>
                     </td>
                 </tr>
 
@@ -593,7 +387,7 @@
                         <label style="height: 100%">ICE Servers:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{url:'stun:222.36.4.254:3478'}]" placeholder="[{url:'stun:222.36.4.254:3478'}]"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ urls:'turn:192.168.177.179', username: 'test',credential:'12#Test123'}]" placeholder="[{ urls:'turn:192.168.177.179', username: 'test',credential:'12#Test123'}]"/>
                     </td>
                 </tr>
                 <tr>
@@ -634,36 +428,11 @@
                     </td>
                 </tr>
                 <tr>
-                    <td id="tdVideo" class='tab-video'>
-                        <div id="divVideo" class='div-video'>
-                            <div id="divVideoRemote" style='position:relative; border:1px solid #009; height:100%; width:100%; z-index: auto; opacity: 1'>
-                                <video class="video" width="100%" height="100%" id="video_remote" autoplay="autoplay" style="opacity: 0;
-                                        background-color: #000000; -webkit-transition-property: opacity; -webkit-transition-duration: 2s;"></video>
-                            </div>
-
-                            <div id="divVideoLocalWrapper" style="margin-left: 0px; border:0px solid #009; z-index: 1000">
-                                <iframe class="previewvideo" style="border:0px solid #009; z-index: 1000"></iframe>
-                                <div id="divVideoLocal" class="previewvideo" style=' border:0px solid #009; z-index: 1000'>
-                                    <video class="video" width="100%" height="100%" id="video_local" autoplay="autoplay" muted="true" style="opacity: 0;
-                                            background-color: #000000; -webkit-transition-property: opacity;
-                                            -webkit-transition-duration: 2s;"></video>
-                                </div>
-                            </div>
-                            <div id="divScreencastLocalWrapper" style="margin-left: 90px; border:0px solid #009; z-index: 1000">
-                                <iframe class="previewvideo" style="border:0px solid #009; z-index: 1000"></iframe>
-                                <div id="divScreencastLocal" class="previewvideo" style=' border:0px solid #009; z-index: 1000'>
-                                </div>
-                            </div>
-
-                        </div>
-                    </td>
-                </tr>
-                <tr>
                     <td align='center'>
                         <div id='divCallOptions' class='call-options' style='opacity: 0; margin-top: 0px'>
 
-                            <input type="button" class="btn" style="" id="btnMute" value="Mute" onclick='WebPhone.sipToggleMute();'/> &nbsp;
-                            <input type="button" class="btn" style="" id="btnHoldResume" value="Hold" onclick='WebPhone.sipToggleHoldResume();'/> &nbsp;
+                            <input type="button" class="btn" style="" id="btnMute" value="Mute" onclick='WebPhone.HoldCall();'/> &nbsp;
+                            <input type="button" class="btn" style="" id="btnHoldResume" value="Hold" onclick='WebPhone.RetrieveCall();'/> &nbsp;
                             <input type="button" class="btn" style="" id="btnTransfer" value="Transfer" onclick='TransferCall();'/> &nbsp;
                         </div>
                     </td>
@@ -693,7 +462,6 @@
 <!-- Call button options -->
 <ul id="ulCallOptions" class="dropdown-menu" style="visibility:hidden">
     <li><a href="#" onclick='sipCallAudio("call-audio");'>Audio</a></li>
-    <li><a href="#" onclick='sipCallVideo("call-audiovideo");'>Video</a></li>
     <li class="divider"></li>
 </ul>
 
@@ -715,7 +483,6 @@
 <script type="text/javascript" src="./assets/js/bootstrap-typeahead.js"></script>
 
 <!-- Audios -->
-<audio id="audio_remote" autoplay="autoplay"></audio>
 <audio id="ringtone" loop src="sounds/ringtone.wav"></audio>
 <audio id="ringbacktone" loop src="sounds/ringbacktone.wav"></audio>
 <audio id="dtmfTone" src="sounds/dtmf.wav"></audio>
