@@ -1,6 +1,6 @@
 (function () {
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.3.19",
+            _version: "2.0.3.20",
             _thisPath: "",
 
             callid: null,
@@ -214,14 +214,21 @@
             // 呼转
             TransferCall: function (callid, s_destination) {
                 if (WebPhone.oSipSessionCall) {
-                    if (!tsk_string_is_null_or_empty(s_destination)) {
-                        if (WebPhone.oSipSessionCall.transfer(s_destination) != 0) {
-                            WebPhone.error('Call transfer failed');
-                            return;
-                        }
-                        WebPhone.debug('Transfering the call...');
-                    }
+                    
+                    var err = WebPhone.oSipSessionCall.transfer(s_destination)
+                    if(err != 0){ 
+						WebPhone.error('Call transfer failed:'+err);
+					}
+                    else {
+						WebPhone.debug('Transfering the call...');
+					}
+					return err;
+    
                 }
+				else{
+					WebPhone.error("TransferCall, the call is not exist.");
+					return 1;
+				}
             },
             /**
              * 保持
@@ -566,7 +573,7 @@
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
                             if (typeof(WebPhone.onTransferred) == "function") {
-                                WebPhone.onTransferred({"callid": null,"cause":"呼叫转接结束"});
+                                WebPhone.onTransferred({"callid": null});
                             }
                             WebPhone.info('呼叫转接结束');
                         }
@@ -577,7 +584,7 @@
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
                             if (typeof(WebPhone.onTransferFailed) == "function") {
-                                WebPhone.onTransferFailed({"callid": null,"cause":"呼叫转接失败"});
+                                WebPhone.onTransferFailed({"callid": null,reason:e.getSipResponseCode(),"msg":"呼叫转接失败"});
                             }
                             WebPhone.error('呼叫转接失败');
                         }
@@ -587,11 +594,9 @@
                     case 'i_ect_notify':
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
-                            WebPhone.debug("转接: <b>" + e.getSipResponseCode() + " " + e.description + "</b>");
-                            if (e.getSipResponseCode() >= 300) {
-                                if (WebPhone.oSipSessionCall.bHeld) {
-                                    WebPhone.oSipSessionCall.resume();
-                                }
+                            WebPhone.debug("转接:" + e.getSipResponseCode() + " " + e.description);
+                            if (typeof(WebPhone.onTransferred) == "function") {
+                                WebPhone.onTransferred({"callid": null});
                             }
                         }
                         break;

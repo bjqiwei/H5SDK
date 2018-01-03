@@ -146,17 +146,7 @@
         }
         //ui
         function showNotifICall(s_number) {
-            // permission already asked when we registered
-            if (window.webkitNotifications && window.webkitNotifications.checkPermission() == 0) {
-                if (oNotifICall) {
-                    oNotifICall.cancel();
-                }
-                oNotifICall = window.webkitNotifications.createNotification('images/sipml-34x39.png', 'Incaming call', 'Incoming call from ' + s_number);
-                oNotifICall.onclose = function () {
-                    oNotifICall = null;
-                };
-                oNotifICall.show();
-            }
+            txtCallStatus.innerHTML = '<i>来电振铃</i>';
         }
 
         //ui
@@ -278,10 +268,14 @@
 
 		WebPhone.onOriginated = function(e){
 			txtCallStatus.innerHTML = '<i>外呼中</i>';
+			btnCall.disabled = true;
+            btnHangUp.disabled = false;
 		}
 		
 		WebPhone.onDelivered = function(e){
 			txtCallStatus.innerHTML = '<i>对方振铃</i>';
+			btnCall.disabled = true;
+            btnHangUp.disabled = false;
 		}
 		
 		WebPhone.onEstablished = function(e)
@@ -423,7 +417,7 @@
                         <label style="height: 100%">ICE Servers:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ url:'turn:192.168.177.179:3478', username: 'test',credential:'12#Test123'}]"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ urls:'turn:192.168.177.179:3478', username: 'test',credential:'12#Test123'}]"/>
                     </td>
                 </tr>
 				<tr>
