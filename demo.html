@@ -108,7 +108,7 @@
             oReadyStateTimer = setInterval(function () {
                         if (document.readyState === "complete") {
                             clearInterval(oReadyStateTimer);
-							WebPhone.setLogLevel("debug");
+							WebPhone.setLogLevel(txtLogLevel.value);
                             WebPhone.Init();
                         }
                     },
@@ -202,8 +202,7 @@
         function uiCallTerminated(s_description) {
             uiBtnCallSetText("Call");
             btnHangUp.value = 'HangUp';
-            btnHoldResume.value = 'hold';
-            btnMute.value = "Mute";
+            btnHoldRetrieve.value = 'Hold';
             btnCall.disabled = false;
             btnHangUp.disabled = true;
 			document.getElementById("ringbacktone").pause();
@@ -262,8 +261,8 @@
 
 
         WebPhone.onHeld = function (e) {
-            btnHoldResume.value = 'Resume';
-            btnHoldResume.disabled = false;
+            btnHoldRetrieve.value = 'Resume';
+            btnHoldRetrieve.disabled = false;
             txtCallStatus.innerHTML = '<i>通话保持</i>';
             oSipSessionCall.bHeld = true;
         }
@@ -283,25 +282,25 @@
             btnHangUp.disabled = false;
 			document.getElementById("ringbacktone").pause();
 			document.getElementById("ringtone").pause();
-			divCallOptions.style.opacity = 0;
+			divCallOptions.style.opacity = 1;
 		}
 		
         WebPhone.onHeldFailed = function (e) {
-            btnHoldResume.value = 'Hold';
-            btnHoldResume.disabled = false;
+            btnHoldRetrieve.value = 'Hold';
+            btnHoldRetrieve.disabled = false;
             txtCallStatus.innerHTML = '<i>通话保持失败</i>';
         }
 
         WebPhone.onRetrieved = function (e) {
  
-            btnHoldResume.value = 'Hold';
-            btnHoldResume.disabled = false;
+            btnHoldRetrieve.value = 'Hold';
+            btnHoldRetrieve.disabled = false;
             txtCallStatus.innerHTML = '<i>通话恢复</i>';
             
         }
 
         WebPhone.onRetrieveFailed = function (e) {
-            btnHoldResume.disabled = false;
+            btnHoldRetrieve.disabled = false;
             txtCallStatus.innerHTML = '<i>恢复通话失败</i>';
         }
 
@@ -409,6 +408,14 @@
                         <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ url:'turn:192.168.177.179:3478', username: 'test',credential:'12#Test123'}]"/>
                     </td>
                 </tr>
+				<tr>
+                    <td>
+                        <label style="height: 100%">Log Level:</label>
+                    </td>
+                    <td>
+                        <input type="text" style="width: 100%; height: 100%" id="txtLogLevel" value="debug"/>
+                    </td>
+                </tr>
                 <tr>
                     <td colspan="2" align="right">
                         <input type="button" class="btn btn-success" id="btnRegister" value="登陆" disabled onclick='sipRegister();'/>
@@ -449,9 +456,7 @@
                 <tr>
                     <td align='center'>
                         <div id='divCallOptions' class='call-options' style='opacity: 0; margin-top: 0px'>
-
-                            <input type="button" class="btn" style="" id="btnMute" value="Mute" onclick='WebPhone.HoldCall();'/> &nbsp;
-                            <input type="button" class="btn" style="" id="btnHoldResume" value="Hold" onclick='WebPhone.RetrieveCall();'/> &nbsp;
+                            <input type="button" class="btn" style="" id="btnHoldRetrieve" value="Hold" onclick='WebPhone.HoldCall();'/> &nbsp;
                             <input type="button" class="btn" style="" id="btnTransfer" value="Transfer" onclick='TransferCall();'/> &nbsp;
                         </div>
                     </td>
