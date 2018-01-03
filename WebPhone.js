@@ -1,6 +1,6 @@
 (function () {
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.3.18",
+            _version: "2.0.3.19",
             _thisPath: "",
 
             callid: null,
@@ -231,7 +231,7 @@
              */
             HoldCall: function (callid) {
                 if (WebPhone.oSipSessionCall) {
-                    var err = WebPhone.oSipSessionCall.hold();
+                    var err = WebPhone.oSipSessionCall.hold(WebPhone.oConfigCall);
                     WebPhone.debug('Holding the call...'+err);
                     return err;
                 } else {
@@ -247,13 +247,10 @@
              */
             RetrieveCall: function (callid) {
                 if (WebPhone.oSipSessionCall) {
-                    WebPhone.debug('Retrieve the call...');
-                    if (WebPhone.oSipSessionCall.bHeld) {
-                        WebPhone.oSipSessionCall.resume();
-                        return 0;
-                    } else {
-                        return 1;
-                    }
+                    var err = WebPhone.oSipSessionCall.resume(WebPhone.oConfigCall);
+                    WebPhone.debug('Retrieve the call...' + err);
+					return err;
+                  
                 } else {
                     WebPhone.error("RetrieveCall, the call is not exist.");
                     return 2;
@@ -501,7 +498,7 @@
                         if (e.session == WebPhone.oSipSessionCall) {
                             if (typeof(WebPhone.onHeld) == "function") {
                                     WebPhone.onHeld({"callid": null});
-                             }
+                            }
                             WebPhone.debug('通话保持');
                         }
                         break;
