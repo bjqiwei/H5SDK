@@ -225,7 +225,7 @@
         }
 
 		WebPhone.onMakeCallFailed = function(e){
-			uiCallTerminated(e.msg);
+			uiCallTerminated(e.reason + ":" + e.msg);
 		}
 		
         WebPhone.onReceived = function (e) {
@@ -283,6 +283,7 @@
             btnHangUp.disabled = false;
 			document.getElementById("ringbacktone").pause();
 			document.getElementById("ringtone").pause();
+			divCallOptions.style.opacity = 0;
 		}
 		
         WebPhone.onHeldFailed = function (e) {
@@ -348,7 +349,7 @@
                         </label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtDisplayName" value="1001"
+                        <input type="text" style="width: 100%; height: 100%" id="txtDisplayName" value="1008"
                                placeholder="1000"/>
                     </td>
                 </tr>
@@ -359,7 +360,7 @@
                         </label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtPrivateIdentity" value="1001"
+                        <input type="text" style="width: 100%; height: 100%" id="txtPrivateIdentity" value="1008"
                                placeholder="1000"/>
                     </td>
                 </tr>
@@ -370,7 +371,7 @@
                         </label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtPublicIdentity" value="sip:1001@192.168.177.178:38890"
+                        <input type="text" style="width: 100%; height: 100%" id="txtPublicIdentity" value="sip:1008@192.168.177.178:38890"
                                placeholder="sip:1000@222.36.4.254:8880"/>
                     </td>
                 </tr>
@@ -396,7 +397,7 @@
                         <label style="height: 100%">Websocket URL:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="ws://192.168.177.178:38899" placeholder="wss://222.36.4.254:4443"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="wss://192.168.177.179:7731" placeholder="wss://222.36.4.254:4443"/>
                     </td>
                 </tr>
 

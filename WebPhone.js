@@ -1,6 +1,6 @@
 (function () {
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.3.16",
+            _version: "2.0.3.17",
             _thisPath: "",
 
             callid: null,
@@ -320,6 +320,16 @@
                     }
                     case 'stopped':
                     {
+						if (WebPhone.oSipSessionRegister != null){
+						
+							if (typeof(WebPhone.onConnectError) == "function") {
+								var msg = {};
+								msg.reason = 506;
+								msg.msg = "network error";
+								WebPhone.onConnectError(msg);
+							}
+						}
+						
                         WebPhone.oSipStack = null;
                         WebPhone.oSipSessionRegister = null;
                         WebPhone.oSipSessionCall = null;
