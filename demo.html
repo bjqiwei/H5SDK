@@ -236,7 +236,7 @@
 
         WebPhone.onCallCleared = function (e) {
             divGlassPanel.style.visibility = 'hidden';
-            uiCallTerminated(e.msg);
+            uiCallTerminated("已挂机:" + msg.reason);
         }
 
         WebPhone.onConnected = function () {
@@ -303,7 +303,7 @@
 			btnHoldRetrieve.onclick = function(){
 				WebPhone.HoldCall();
 			}
-            txtCallStatus.innerHTML = '<i>通话恢复</i>';
+            txtCallStatus.innerHTML = '<i>通话中</i>';
             
         }
 
@@ -470,6 +470,18 @@
                         <div id='divCallOptions' class='call-options' style='opacity: 0; margin-top: 0px'>
                             <input type="button" class="btn" style="" id="btnHoldRetrieve" value="Hold" onclick='WebPhone.HoldCall();'/> &nbsp;
                             <input type="button" class="btn" style="" id="btnTransfer" value="Transfer" onclick='TransferCall();'/> &nbsp;
+							<input type="button" class="btn" style="" value="0" onclick='WebPhone.SendDTMF(null,"0");'/>
+							<input type="button" class="btn" style="" value="1" onclick='WebPhone.SendDTMF(null,"1");'/>
+							<input type="button" class="btn" style="" value="2" onclick='WebPhone.SendDTMF(null,"2");'/>
+							<input type="button" class="btn" style="" value="3" onclick='WebPhone.SendDTMF(null,"3");'/>
+							<input type="button" class="btn" style="" value="4" onclick='WebPhone.SendDTMF(null,"4");'/>
+							<input type="button" class="btn" style="" value="5" onclick='WebPhone.SendDTMF(null,"5");'/>
+							<input type="button" class="btn" style="" value="6" onclick='WebPhone.SendDTMF(null,"6");'/>
+							<input type="button" class="btn" style="" value="7" onclick='WebPhone.SendDTMF(null,"7");'/>
+							<input type="button" class="btn" style="" value="8" onclick='WebPhone.SendDTMF(null,"8");'/>
+							<input type="button" class="btn" style="" value="9" onclick='WebPhone.SendDTMF(null,"9");'/>
+							<input type="button" class="btn" style="" value="*" onclick='WebPhone.SendDTMF(null,"*");'/>
+							<input type="button" class="btn" style="" value="#" onclick='WebPhone.SendDTMF(null,"#");'/>
                         </div>
                     </td>
                 </tr>

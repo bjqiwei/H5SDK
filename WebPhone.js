@@ -1,6 +1,6 @@
 (function () {
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.3.20",
+            _version: "2.0.3.21",
             _thisPath: "",
 
             callid: null,
@@ -215,12 +215,11 @@
             },
             //发送DTMF
             SendDTMF: function (callid, c) {
-                WebPhone.debug("SendDTMF,callid:" + callid + ",c:" + c);
+                var err = 1;
                 if (WebPhone.oSipSessionCall && c) {
-                    if (WebPhone.oSipSessionCall.dtmf(c) == 0) {
-                        //try { dtmfTone.play(); } catch (e) { }
-                    }
+				    err = WebPhone.oSipSessionCall.dtmf(c);
                 }
+				WebPhone.debug("SendDTMF,callid:" + callid + ",c:" + c + ",result:" + err);
             },
             // 呼转
             TransferCall: function (callid, s_destination) {
@@ -666,6 +665,21 @@
                         }
                         break;
                     }
+					case "i_info":
+					{
+						if (e.session == WebPhone.oSipSessionCall) {
+							if(e.getContentType() == "application/dtmf-relay"){
+								var dtmf = e.getContentString(); //Signal=9
+								dtmf = dtmf.substr(dtmf.indexOf("Signal=")+7,1);
+								var msg = {"callid": null,"dtmf":dtmf};
+								WebPhone.debug("onDtmfReceived:" + JSON.stringify(msg));
+								if (typeof(WebPhone.onDtmfReceived) == "function") {
+									WebPhone.onDtmfReceived(msg);
+								}
+							}
+						}
+						break;
+					}
                 }
                 
             },
