@@ -20,9 +20,10 @@
             **/
             setLogLevel:function(level)
             {
+                WebPhone.debug("setLogLevel:"+level);
                 if(level == "error" || level == "warn" || level == "info" || level == "debug"){
-                    loglevel = level;
-                    SIPml.setDebugLevel(loglevel);
+                    WebPhone.loglevel = level;
+                    SIPml.setDebugLevel(WebPhone.loglevel);
                 }
                 else {
                     WebPhone.error("set log level error, not recognize:"+level);
@@ -39,8 +40,8 @@
              * @param s_ndb NativeDebug
              */
             Init: function () {
-                
-                SIPml.setDebugLevel(loglevel);
+                WebPhone.debug("Init:");
+                WebPhone.info("WebPhone version=" + WebPhone._version);
                 var audio = document.createElement("audio");
                 //audio.setAttribute("id", "audio_remote");
                 audio.setAttribute("autoplay", "true");
@@ -58,6 +59,7 @@
                 }
                 */
                 // initialize SIPML5
+                SIPml.setDebugLevel(WebPhone.loglevel);
                 SIPml.init(WebPhone.sipmlInit);
                 /*
                 // set other options after initialization
@@ -109,6 +111,7 @@
              */
             Login: function (txtRealm, sipid, sipurl, pwd, txtDisplayName, txtWebsocketUrl, txtICEServer) {
                 // catch exception for IE (DOM not ready)
+                WebPhone.debug("Login,Realm:" + txtRealm + ",SipID:" + sipid + ",SipUrl:" + sipurl + ",Pwd:" + pwd + ",DisplayName:" + txtDisplayName + ",WebSocketUrl:" + txtWebsocketUrl + ",ICEServer:" + txtICEServer);
                 try {
                     SIPml.setDebugLevel("info");
                     // enable notifications if not already done
@@ -148,6 +151,7 @@
             },
             // 注销
             Logout: function () {
+                WebPhone.debug("Logout:");
                 if (WebPhone.oSipStack) {
                     WebPhone.oSipStack.stop(); // shutdown all sessions
                 }
@@ -158,10 +162,12 @@
              * @returns {string}
              */
             getVersion: function () {
+                WebPhone.debug("getVersion:");
                 return WebPhone._version;
             },
             //呼叫
             MakeCall: function (called) {
+                WebPhone.debug("MakeCall:" + called);
                 if (WebPhone.oSipStack) {
                     // create call session
                     WebPhone.oSipSessionCall = WebPhone.oSipStack.newSession('call-audio', WebPhone.oConfigCall);
@@ -175,6 +181,7 @@
                             msg.reason = err;
                             msg.msg="make call failed";
                             WebPhone.onMakeCallFailed(msg);
+                            WebPhone.debug("onMakeCallFailed:" + JSON.stringify(msg));
                             return err;
                         }
                     }
@@ -184,12 +191,14 @@
                     msg.reason = 1;
                     msg.msg="未注册";
                     WebPhone.onMakeCallFailed(msg);
+                    WebPhone.debug("onMakeCallFailed:" + JSON.stringify(msg));
                     return 1;
                 }
                 return 0;
             },
             //摘机
             AnswerCall: function (callid) {
+                WebPhone.debug("AnswerCall:" + callid);
                 if (WebPhone.oSipSessionCall) {
                     WebPhone.debug('Connecting...');
                     WebPhone.oSipSessionCall.accept(WebPhone.oConfigCall);
@@ -197,6 +206,7 @@
             },
             // 挂断 (SIP BYE or CANCEL)
             ClearCall: function (callid, reason) {
+                WebPhone.debug("ClearCall, callid:" + callid + ",reason:" + reason);
                 if (WebPhone.oSipSessionCall) {
                     WebPhone.debug('Terminating the call...');
                     WebPhone.oSipSessionCall.hangup({events_listener: {events: '*', listener: WebPhone.onSipSessionEvent}});
@@ -205,6 +215,7 @@
             },
             //发送DTMF
             SendDTMF: function (callid, c) {
+                WebPhone.debug("SendDTMF,callid:" + callid + ",c:" + c);
                 if (WebPhone.oSipSessionCall && c) {
                     if (WebPhone.oSipSessionCall.dtmf(c) == 0) {
                         //try { dtmfTone.play(); } catch (e) { }
@@ -213,22 +224,23 @@
             },
             // 呼转
             TransferCall: function (callid, s_destination) {
+                WebPhone.debug("TransferCall,callid:" + callid+ ",destination:" + s_destination);
                 if (WebPhone.oSipSessionCall) {
                     
                     var err = WebPhone.oSipSessionCall.transfer(s_destination)
                     if(err != 0){ 
-						WebPhone.error('Call transfer failed:'+err);
-					}
+                        WebPhone.error('Call transfer failed:'+err);
+                    }
                     else {
-						WebPhone.debug('Transfering the call...');
-					}
-					return err;
+                        WebPhone.debug('Transfering the call...');
+                    }
+                    return err;
     
                 }
-				else{
-					WebPhone.error("TransferCall, the call is not exist.");
-					return 1;
-				}
+                else{
+                    WebPhone.error("TransferCall, the call is not exist.");
+                    return 1;
+                }
             },
             /**
              * 保持
@@ -237,6 +249,7 @@
              * @constructor
              */
             HoldCall: function (callid) {
+                WebPhone.debug("HoldCall,callid:" + callid);
                 if (WebPhone.oSipSessionCall) {
                     var err = WebPhone.oSipSessionCall.hold(WebPhone.oConfigCall);
                     WebPhone.debug('Holding the call...'+err);
@@ -253,10 +266,11 @@
              * @constructor
              */
             RetrieveCall: function (callid) {
+                WebPhone.debug("RetrieveCall,callid:" + callid);
                 if (WebPhone.oSipSessionCall) {
                     var err = WebPhone.oSipSessionCall.resume(WebPhone.oConfigCall);
                     WebPhone.debug('Retrieve the call...' + err);
-					return err;
+                    return err;
                   
                 } else {
                     WebPhone.error("RetrieveCall, the call is not exist.");
@@ -303,6 +317,13 @@
                         }
                         catch (e) {
                             WebPhone.warn(e);
+                            if (typeof(WebPhone.onConnectError) == "function") {
+                                var msg = {};
+                                msg.reason = 500;
+                                msg.msg = e.toString();
+                                WebPhone.onConnectError(msg);
+                                WebPhone.debug("onConnectError:" + JSON.stringify(msg));
+                            }
                         }
                         break;
                     }
@@ -319,6 +340,7 @@
                                 msg.reason = 506;
                                 msg.msg = "network error";
                                 WebPhone.onConnectError(msg);
+                                WebPhone.debug("onConnectError:" + JSON.stringify(msg));
                             }
                         }
                         
@@ -335,6 +357,7 @@
                         var msg = {};
                         msg.reason=504;
                         msg.msg = e.description
+                        WebPhone.debug("onConnectError:" + JSON.stringify(msg));
                         if (e.session == WebPhone.oSipSessionRegister && typeof(WebPhone.onConnectError) == "function") {
                             WebPhone.onConnectError(msg);
                             WebPhone.error(e.description);
@@ -361,9 +384,11 @@
                             // start listening for events
                             WebPhone.oSipSessionCall.setConfiguration(WebPhone.oConfigCall);
                             var sRemoteNumber = (WebPhone.oSipSessionCall.getRemoteFriendlyName() || 'unknown');
+                            var msg = {"callid": null, "caller": sRemoteNumber};
+                            WebPhone.debug("onReceived:" + JSON.stringify(msg));
                             WebPhone.info("呼入号码为 [" + sRemoteNumber + "]");
                             if (typeof(WebPhone.onReceived) == "function") {
-                                WebPhone.onReceived({"callid": null, "caller": sRemoteNumber});
+                                WebPhone.onReceived(msg);
                             }
                         }
                         break;
@@ -395,16 +420,22 @@
                     }
                     case 'connected':// 'connected'
                     {
-                        if (e.session == WebPhone.oSipSessionRegister && typeof(WebPhone.onConnected) == "function") {
-                              WebPhone.onConnected();
+                        WebPhone.debug(e.description);
+                        if (e.session == WebPhone.oSipSessionRegister) {
+                            WebPhone.debug("onConnected:");
+                            if(typeof(WebPhone.onConnected) == "function"){
+                                WebPhone.onConnected();
+                            }
                         }
-                        else if (typeof(WebPhone.onEstablished) == "function"){
+                        else {
                             var msg = {};
                             msg.callid = null;
                             msg.msg = e.description;
-                            WebPhone.onEstablished(msg);
+                            WebPhone.debug("onEstablished:" + JSON.stringify(msg));
+                            if (typeof(WebPhone.onEstablished) == "function"){
+                                WebPhone.onEstablished(msg);
+                            }
                         }
-                        WebPhone.debug(e.description);
                         break;
                     }
                     case 'terminating':
@@ -417,15 +448,17 @@
                             WebPhone.oSipSessionRegister = null;
                             if(e.o_event.o_message.line.response.i_status_code != 200)
                             {
+                                var msg = {};
+                                msg.reason = e.o_event.o_message.line.response.i_status_code;
+                                msg.msg = e.description;
+                                WebPhone.debug("onConnectError:" + JSON.stringify(msg));
                                 WebPhone.error("登录失败:" + e.o_event.o_message.line.response.i_status_code);
                                 if (typeof(WebPhone.onConnectError) == "function") {
-                                    var msg = {};
-                                    msg.reason = e.o_event.o_message.line.response.i_status_code;
-                                    msg.msg = e.description;
                                     WebPhone.onConnectError(msg);
                                 }
                             }
                             else{
+                                WebPhone.debug("onLogout:");
                                 WebPhone.info("登出成功");
                                 if (typeof(WebPhone.onLogout) == "function") {
                                     WebPhone.onLogout();
@@ -446,6 +479,7 @@
                                 }
                                 catch (e){
                                 }
+                                WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
                                 WebPhone.info("通话已挂断:" + msg.reason);
                                 WebPhone.onCallCleared(msg);
                             }
@@ -469,21 +503,27 @@
                         if (e.session == WebPhone.oSipSessionCall) {
                             var iSipResponseCode = e.getSipResponseCode();
                             if (iSipResponseCode == 100) {
-                                WebPhone.info("onOriginated");
+                                var msg = {"callid": null};
+                                WebPhone.debug("onOriginated:" + JSON.stringify(msg));
+                                WebPhone.info("外呼中...");
                                 if (typeof(WebPhone.onOriginated) == "function") {
-                                    WebPhone.onOriginated({"callid": null});
+                                    WebPhone.onOriginated(msg);
                                 }
                             }
                             if (iSipResponseCode == 180 || iSipResponseCode == 183) {
+                                var msg = {"callid": null};
+                                WebPhone.debug("onDelivered:"+JSON.stringify(msg));
                                 WebPhone.info('远端振铃...');
                                 if (typeof(WebPhone.onDelivered) == "function") {
-                                    WebPhone.onDelivered({"callid": null});
+                                    WebPhone.onDelivered(msg);
                                 }
                             }
                             if (iSipResponseCode == 200) {
-                                WebPhone.info("onEstablished");
+                                var msg = {"callid": null};
+                                WebPhone.debug("onEstablished:" + JSON.stringify(msg));
+                                WebPhone.info("通话中");
                                 if (typeof(WebPhone.onEstablished) == "function") {
-                                    WebPhone.onEstablished({"callid": null});
+                                    WebPhone.onEstablished(msg);
                                 }
                             }
                         }
@@ -492,10 +532,11 @@
                     case 'm_early_media':
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
-                            WebPhone.debug('早期媒体开始');
                             WebPhone.debug('远端振铃...');
+                            var msg = {"callid": null};
+                            WebPhone.debug("onDelivered:" + JSON.stringify(msg));
                             if (typeof(WebPhone.onDelivered) == "function") {
-                                WebPhone.onDelivered({"callid": null});
+                                WebPhone.onDelivered(msg);
                             }
                         }
                         break;
@@ -503,8 +544,10 @@
                     case 'm_local_hold_ok':
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
+                            var msg = {"callid": null};
+                            WebPhone.debug("onHeld:"+JSON.stringify(msg));
                             if (typeof(WebPhone.onHeld) == "function") {
-                                    WebPhone.onHeld({"callid": null});
+                                    WebPhone.onHeld(msg);
                             }
                             WebPhone.debug('通话保持');
                         }
@@ -513,9 +556,11 @@
                     case 'm_local_hold_nok':
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
-                             if (typeof(WebPhone.onHeldFailed) == "function") {
-                                    WebPhone.onHeldFailed({"callid": null,"cause":"通话保持失败"});
-                             }
+                            var msg = {"callid": null,reason:e.getSipResponseCode(),"msg":"通话保持失败"};
+                            WebPhone.debug("onHeldFailed:"+JSON.stringify(msg));
+                            if (typeof(WebPhone.onHeldFailed) == "function") {
+                                WebPhone.onHeldFailed(msg);
+                            }
                             WebPhone.error('通话保持失败');
                         }
                         break;
@@ -523,8 +568,10 @@
                     case 'm_local_resume_ok':
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
+                            var msg = {"callid": null,reason:e.getSipResponseCode(),"msg":"通话恢复"};
+                            WebPhone.debug("onRetrieved:" + JSON.stringify(msg));
                             if (typeof(WebPhone.onRetrieved) == "function") {
-                                    WebPhone.onRetrieved({"callid": null,"cause":"通话恢复"});
+                                    WebPhone.onRetrieved(msg);
                              }
                             WebPhone.debug('通话恢复');
                         }
@@ -533,8 +580,10 @@
                     case 'm_local_resume_nok':
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
+                            var msg = {"callid": null,reason:e.getSipResponseCode(),"msg":"通话恢复失败"};
+                            WebPhone.debug("onRetrieveFailed:"+msg);
                             if (typeof(WebPhone.onRetrieveFailed) == "function") {
-                                    WebPhone.onRetrieveFailed({"callid": null,"cause":"通话恢复失败"});
+                                    WebPhone.onRetrieveFailed(msg);
                             }
                             WebPhone.error('恢复通话失败');
                         }
@@ -572,8 +621,10 @@
                     case 'i_ect_completed':
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
+                            var msg = {"callid": null};
+                            WebPhone.debug("onTransferred:" + JSON.stringify(msg));
                             if (typeof(WebPhone.onTransferred) == "function") {
-                                WebPhone.onTransferred({"callid": null});
+                                WebPhone.onTransferred(msg);
                             }
                             WebPhone.info('呼叫转接结束');
                         }
@@ -583,8 +634,10 @@
                     case 'i_ect_failed'://转接失败
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
+                            var msg = {"callid": null,reason:e.getSipResponseCode(),"msg":"呼叫转接失败"};
+                            WebPhone.debug("onTransferFailed:" + JSON.stringify(msg));
                             if (typeof(WebPhone.onTransferFailed) == "function") {
-                                WebPhone.onTransferFailed({"callid": null,reason:e.getSipResponseCode(),"msg":"呼叫转接失败"});
+                                WebPhone.onTransferFailed(msg);
                             }
                             WebPhone.error('呼叫转接失败');
                         }
@@ -595,8 +648,10 @@
                     {
                         if (e.session == WebPhone.oSipSessionCall) {
                             WebPhone.debug("转接:" + e.getSipResponseCode() + " " + e.description);
+                            var msg = {"callid": null};
+                            WebPhone.debug("onTransferred:" + JSON.stringify(msg));
                             if (typeof(WebPhone.onTransferred) == "function") {
-                                WebPhone.onTransferred({"callid": null});
+                                WebPhone.onTransferred(msg);
                             }
                         }
                         break;
@@ -649,7 +704,7 @@
              * @returns {string}
              */
             debug: function (c) {
-                if(loglevel == "debug"){
+                if(WebPhone.loglevel == "debug"){
                     c = "[" + WebPhone.dateNow() + "] " + c;
                     window.console.debug(c);
                 }
@@ -657,21 +712,21 @@
             
             
             info: function (c) {
-                if(loglevel == "debug" || loglevel == "info"){
+                if(WebPhone.loglevel == "debug" || WebPhone.loglevel == "info"){
                     c = "[" + WebPhone.dateNow() + "] " + c;
                     window.console.info(c);
                 }
             },
             
             warn: function (c) {
-                if(loglevel == "debug" || loglevel == "info"  || loglevel == "warn"){
+                if(WebPhone.loglevel == "debug" || WebPhone.loglevel == "info"  || WebPhone.loglevel == "warn"){
                     c = "[" + WebPhone.dateNow() + "] " + c;
                     window.console.warn(c);
                 }
             },
             
             error: function (c) {
-                if(loglevel == "debug" || loglevel == "info"  || loglevel == "warn" || loglevel == "error" ){
+                if(WebPhone.loglevel == "debug" || WebPhone.loglevel == "info"  || WebPhone.loglevel == "warn" || WebPhone.loglevel == "error" ){
                     c = "[" + WebPhone.dateNow() + "] " + c;
                     window.console.error(c);
                 }
