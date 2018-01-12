@@ -100,7 +100,6 @@
 
         window.onload = function () {
             window.console && window.console.info && window.console.info("location=" + window.location);
-            loadCredentials();
             // Initialize call button
             btnRegister.disabled = false;
 
@@ -111,38 +110,13 @@
                             WebPhone.Init();
                         }
                     },
-                    500);
+                    100);
 
         }
 		
 		window.onunload  = function (){
 			WebPhone.ClearCall();
 		}
-
-        //加载保存信息
-        function loadCredentials() {
-            if (window.localStorage) {
-                // IE retuns 'null' if not defined
-                var s_value;
-                if ((s_value = window.localStorage.getItem('org.yuntongxun.identity.display_name'))) txtDisplayName.value = s_value;
-                if ((s_value = window.localStorage.getItem('org.yuntongxun.identity.impi'))) txtPrivateIdentity.value = s_value;
-                if ((s_value = window.localStorage.getItem('org.yuntongxun.identity.impu'))) txtPublicIdentity.value = s_value;
-                if ((s_value = window.localStorage.getItem('org.yuntongxun.identity.password'))) txtPassword.value = s_value;
-                if ((s_value = window.localStorage.getItem('org.yuntongxun.identity.realm'))) txtRealm.value = s_value;
-            }
-            else {
-            }
-        }
-        //信息保存
-        function saveCredentials() {
-            if (window.localStorage) {
-                window.localStorage.setItem('org.yuntongxun.identity.display_name', txtDisplayName.value);
-                window.localStorage.setItem('org.yuntongxun.identity.impi', txtPrivateIdentity.value);
-                window.localStorage.setItem('org.yuntongxun.identity.impu', txtPublicIdentity.value);
-                window.localStorage.setItem('org.yuntongxun.identity.password', txtPassword.value);
-                window.localStorage.setItem('org.yuntongxun.identity.realm', txtRealm.value);
-            }
-        }
         //ui
         function showNotifICall(s_number) {
             txtCallStatus.innerHTML = '<i>来电振铃</i>';
@@ -382,8 +356,7 @@
                         </label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtPublicIdentity" value="sip:1008@192.168.177.178:38890"
-                               placeholder="sip:1000@222.36.4.254:8880"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtPublicIdentity" value="sip:1008@192.168.177.177:8880">
                     </td>
                 </tr>
                 <tr>
@@ -391,7 +364,7 @@
                         <label style="height: 100%">密码:</label>
                     </td>
                     <td>
-                        <input type="password" style="width: 100%; height: 100%" id="txtPassword" value="123456"/>
+                        <input type="password" style="width: 100%; height: 100%" id="txtPassword" value="12345678"/>
                     </td>
                 </tr>
                 <tr>
@@ -399,7 +372,7 @@
                         <label style="height: 100%">域名:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtRealm" value="192.168.177.178:38890" placeholder="222.36.4.254:8880"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtRealm" value="192.168.177.177:8880"/>
                     </td>
                 </tr>
 
@@ -408,7 +381,7 @@
                         <label style="height: 100%">Websocket URL:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="wss://192.168.177.179:7731" placeholder="wss://222.36.4.254:4443"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="wss://webrtc2.acloudcc.com:7732"/>
                     </td>
                 </tr>
 
@@ -417,7 +390,7 @@
                         <label style="height: 100%">ICE Servers:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ urls:'turn:192.168.177.179:3478', username: 'test',credential:'12#Test123'}]"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ urls:'turn:webrtc2.acloudcc.com:3478', username: 'test',credential:'12#Test123'}]"/>
                     </td>
                 </tr>
 				<tr>
