@@ -115,7 +115,7 @@
         }
 		
 		window.onunload  = function (){
-			WebPhone.ClearCall();
+			//WebPhone.ClearCall();
 		}
         //ui
         function showNotifICall(s_number) {
@@ -210,7 +210,7 @@
 
         WebPhone.onCallCleared = function (e) {
             divGlassPanel.style.visibility = 'hidden';
-            uiCallTerminated("已挂机:" + msg.reason);
+            uiCallTerminated("已挂机:" + e.reason);
         }
 
         WebPhone.onConnected = function () {
@@ -221,6 +221,7 @@
 		WebPhone.onConnectError = function (e) {
             uiOnConnectionEvent(false, false);
             txtRegStatus.innerHTML = "<i>" + e.msg + "</i>";
+			uiCallTerminated();
         }
 
         WebPhone.onLogout = function () {

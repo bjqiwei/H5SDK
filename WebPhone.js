@@ -6,8 +6,7 @@
             callid: null,
             audioRemote: null,
 
-            ASession: null,
-            oSipSessionTransferCall: null,
+            SessionS: {},
             userAgent: null,
             loglevel:"debug",
             
@@ -95,21 +94,30 @@
 				});
 				
 				WebPhone.userAgent.on('disconnected', function(args){
-					
 					var msg = {};
                     msg.reason = args.code?args.code:1006;
                     msg.msg = args.response ? args.response:"WebSocket connection error";
 					WebPhone.debug("disconnected:" + JSON.stringify(msg));
-					if(WebPhone.userAgent.status === SIP.UA.C.STATUS_STARTING){
+					if(WebPhone.userAgent != null && WebPhone.userAgent.status === SIP.UA.C.STATUS_STARTING){
 						WebPhone.error("登录失败:" + JSON.stringify(msg));
 						if (typeof(WebPhone.onConnectError) == "function") {
 							WebPhone.onConnectError(msg);
 						}
+						
+						WebPhone.userAgent.stop();
+						WebPhone.userAgent = null;
 					}
-					WebPhone.userAgent.stop();
+					
 				});
 				
 				WebPhone.userAgent.on('registered', function(args){
+					
+					if(WebPhone.userAgent.IsRegeisted === true){
+						return;
+					}
+					
+					WebPhone.userAgent.IsRegeisted = true;
+					
 					WebPhone.debug("registered:");
 					WebPhone.debug("登录成功");
                     if(typeof(WebPhone.onConnected) == "function"){
@@ -118,23 +126,27 @@
 				});
 				
 				WebPhone.userAgent.on('unregistered', function(response,cause){
+
 					var msg = {};
                     msg.reason = response? response.status_code:504;
-                    msg.msg = cause;
+                    msg.msg = response?response.reason_phrase:cause;
 					WebPhone.debug("unregistered:" + JSON.stringify(msg));
-					if(WebPhone.userAgent.status === SIP.UA.C.STATUS_READY){
-						WebPhone.info("登录失败:" + JSON.stringify(msg));
-						if (typeof(WebPhone.onConnectError) == "function") {
-							WebPhone.onConnectError(msg);
+					if (WebPhone.userAgent != null){
+						if(WebPhone.userAgent.status === SIP.UA.C.STATUS_READY){
+							WebPhone.info("登录失败:" + JSON.stringify(msg));
+							if (typeof(WebPhone.onConnectError) == "function") {
+								WebPhone.onConnectError(msg);
+							}
 						}
-					}
-					else{
-						WebPhone.info("登出成功");
-						if (typeof(WebPhone.onLogout) == "function") {
-							WebPhone.onLogout();
+						else{
+							WebPhone.info("登出成功");
+							if (typeof(WebPhone.onLogout) == "function") {
+								WebPhone.onLogout();
+							}
 						}
 					}
 					WebPhone.userAgent.stop();
+					WebPhone.userAgent = null;
 				});
 				
 				WebPhone.userAgent.on('registrationFailed', function (response, cause) {
@@ -147,6 +159,25 @@
                         WebPhone.onConnectError(msg);
                     }
 				});
+				
+				WebPhone.userAgent.on('invite', function (session) {
+					WebPhone.debug('invite:' + session.call_id);
+					WebPhone.SessionS[session.call_id] = session; 
+
+					var sRemoteNumber = (WebPhone.oSipSessionCall.getRemoteFriendlyName() || 'unknown');
+                    var msg = {"callid": null, "caller": sRemoteNumber};
+                    WebPhone.debug("onReceived:" + JSON.stringify(msg));
+                    WebPhone.info("呼入号码为 [" + sRemoteNumber + "]");
+                    if (typeof(WebPhone.onReceived) == "function") {
+                        WebPhone.onReceived(msg);
+                    }
+					
+				});
+				
+				WebPhone.userAgent.on('message', function (message) {
+					WebPhone.debug("message:" + message.body);
+				});
+				
 				WebPhone.userAgent.start();
 
             },
@@ -169,27 +200,118 @@
             //呼叫
             MakeCall: function (called) {
                 WebPhone.debug("MakeCall:" + called);
+				var session = null;
                 if (WebPhone.userAgent) {
                     // create call session
-                    WebPhone.ASession = WebPhone.userAgent.invite(called, {sessionDescriptionHandlerOptions: {
+                    session = WebPhone.userAgent.invite(called, {sessionDescriptionHandlerOptions: {
 						constraints: {
 							audio: true,
 							video: false
 						}
 					}});
-
-					if ( WebPhone.ASession == null) {
-						WebPhone.ASession = null;
+					
+					if (session == null) {
+						
 						WebPhone.error('Failed to make call');
 						if (typeof(WebPhone.onMakeCallFailed) == "function") {
 							var msg = {};
-							msg.reason = err;
+							msg.reason = 1;
 							msg.msg="make call failed";
 							WebPhone.onMakeCallFailed(msg);
 							WebPhone.debug("onMakeCallFailed:" + JSON.stringify(msg));
-							return err;
+			 				return err;
 						}
 					}
+					
+					var call_id = session.id.substr(0,session.id.indexOf(session.from_tag));
+					WebPhone.debug("MakeCall:" + call_id);
+					session.on('progress', function (response) {
+						//debugger;
+						WebPhone.debug('progress');
+                        var msg = {"callid": response.call_id};
+						if(response.status_code == 100){
+							WebPhone.debug("onOriginated:" + JSON.stringify(msg));
+							WebPhone.info("外呼中...");
+							if (typeof(WebPhone.onOriginated) == "function") {
+								WebPhone.onOriginated(msg);
+							}
+						}
+						else if(response.status_code == 180 || response.status_code == 183){
+							WebPhone.debug('远端振铃...');
+                            var msg = {"callid": response.call_id};
+                            WebPhone.debug("onDelivered:" + JSON.stringify(msg));
+                            if (typeof(WebPhone.onDelivered) == "function") {
+                                WebPhone.onDelivered(msg);
+                            }
+						}
+                        
+					});
+					
+					session.on('accepted', function (data) {
+						WebPhone.debug('accepted');;
+                        var msg = {"callid": data.call_id,"msg":data.reason_phrase};
+                        WebPhone.debug("onEstablished:" + JSON.stringify(msg));
+                        WebPhone.info("通话中");
+                        if (typeof(WebPhone.onEstablished) == "function") {
+                            WebPhone.onEstablished(msg);
+                        }
+						
+					});
+					
+					session.on('rejected', function (response, cause) {
+						WebPhone.debug('rejected:' + cause);
+					});
+					
+					session.on('failed', function (response, cause) {
+						WebPhone.debug('failed:'+cause);
+					});
+					
+					session.on('terminated', function(message, cause) {
+						//debugger;
+						if(message === null || cause === null){
+							return;
+						}
+						
+						WebPhone.debug('terminated:' + cause);
+						var msg = {"callid":message.call_id,"reason":message.status_code ? message.status_code:200,"msg":cause?cause:"OK"};
+						WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
+                        WebPhone.info("通话已挂断:" + msg.reason);
+                        WebPhone.onCallCleared(msg);
+						delete WebPhone.SessionS[message.call_id];
+					});
+					
+					session.on('cancel', function() {
+						WebPhone.debug('cancel');
+					});
+					
+					session.on('reinvite', function(session) {
+						WebPhone.debug('reinvite');
+					});
+					
+					session.on('replaced', function (newSession) {
+						WebPhone.debug('replaced');
+					});
+					
+					session.on('dtmf', function(request, dtmf) {
+						WebPhone.debug('dtmf');
+						var msg = {"callid": request.call_id,"dtmf":dtmf};
+						WebPhone.debug("onDtmfReceived:" + JSON.stringify(msg));
+						if (typeof(WebPhone.onDtmfReceived) == "function") {
+							WebPhone.onDtmfReceived(msg);
+						}
+					});
+					
+					session.on('bye', function(request) {
+						//debugger;
+						WebPhone.debug('bye:' + request.call_id);
+						var msg = {"callid":request.call_id,"reason":200,"msg":request.method};
+						WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
+                        WebPhone.info("通话已挂断:" + msg.reason);
+                        WebPhone.onCallCleared(msg);
+						delete WebPhone.SessionS[request.call_id];
+					});
+					
+					WebPhone.SessionS[call_id] = session;
                 }
                 else if (typeof(WebPhone.onMakeCallFailed) == "function") {
                     var msg = {};
@@ -212,10 +334,20 @@
             // 挂断 (SIP BYE or CANCEL)
             ClearCall: function (callid, reason) {
                 WebPhone.debug("ClearCall, callid:" + callid + ",reason:" + reason);
-                if (WebPhone.ASession) {
-                    WebPhone.debug('Terminating the call...');
-                    WebPhone.ASession.hangup({events_listener: {events: '*', listener: WebPhone.onSipSessionEvent}});
+                if (callid) {
+                    WebPhone.debug('Terminating the call...'+callid);
+					
+                    WebPhone.SessionS[callid].terminate({status_code:reason});
                 }
+				else{
+					WebPhone.debug('Terminating all call...');
+					var call_id;
+					for(call_id in WebPhone.SessionS){
+						 WebPhone.debug('Terminating the call...'+call_id);
+						 WebPhone.SessionS[call_id].terminate({status_code:reason});
+					}
+					
+				}
                 return 0;
             },
             //发送DTMF
@@ -303,50 +435,7 @@
             onSipSessionEvent: function (e) {
                 WebPhone.debug("收到Session事件：" + e.type);
                 switch (e.type) {
-                    case 'terminated'://登出 // 'terminating' | 'terminated'
-                    {
-                        if (e.session == WebPhone.userAgent) {
-                            WebPhone.userAgent = null;
-                            if(e.o_event.o_message.line.response.i_status_code != 200)
-                            {
-                                var msg = {};
-                                msg.reason = e.o_event.o_message.line.response.i_status_code;
-                                msg.msg = e.description;
-                                WebPhone.debug("onConnectError:" + JSON.stringify(msg));
-                                WebPhone.error("登录失败:" + e.o_event.o_message.line.response.i_status_code);
-                                if (typeof(WebPhone.onConnectError) == "function") {
-                                    WebPhone.onConnectError(msg);
-                                }
-                            }
-                            else{
-                                WebPhone.debug("onLogout:");
-                                WebPhone.info("登出成功");
-                                if (typeof(WebPhone.onLogout) == "function") {
-                                    WebPhone.onLogout();
-                                }
-                            }
-                            
-                        }
-                        
-                        if (e.session == WebPhone.ASession) {
-                            WebPhone.ASession = null;
-                            if(typeof(WebPhone.onCallCleared) == "function"){
-                                var msg ={};
-                                msg.callid=null;
-                                msg.msg = e.description;
-                                msg.reason = 200;
-                                try{
-                                    msg.reason = e.o_event.o_message.line.response.i_status_code;
-                                }
-                                catch (e){
-                                }
-                                WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
-                                WebPhone.info("通话已挂断:" + msg.reason);
-                                WebPhone.onCallCleared(msg);
-                            }
-                        }    
-                        break;
-                    }
+                    
                     case 'm_stream_audio_local_added':
                     case 'm_stream_audio_local_removed':
                     case 'm_stream_audio_remote_added':
@@ -359,37 +448,7 @@
                         WebPhone.oSipSessionTransferCall = e.session;
                         break;
                     }
-                    case 'i_ao_request':
-                    {
-                        if (e.session == WebPhone.ASession) {
-                            var iSipResponseCode = e.getSipResponseCode();
-                            if (iSipResponseCode == 100) {
-                                var msg = {"callid": null};
-                                WebPhone.debug("onOriginated:" + JSON.stringify(msg));
-                                WebPhone.info("外呼中...");
-                                if (typeof(WebPhone.onOriginated) == "function") {
-                                    WebPhone.onOriginated(msg);
-                                }
-                            }
-                            if (iSipResponseCode == 180 || iSipResponseCode == 183) {
-                                var msg = {"callid": null};
-                                WebPhone.debug("onDelivered:"+JSON.stringify(msg));
-                                WebPhone.info('远端振铃...');
-                                if (typeof(WebPhone.onDelivered) == "function") {
-                                    WebPhone.onDelivered(msg);
-                                }
-                            }
-                            if (iSipResponseCode == 200) {
-                                var msg = {"callid": null};
-                                WebPhone.debug("onEstablished:" + JSON.stringify(msg));
-                                WebPhone.info("通话中");
-                                if (typeof(WebPhone.onEstablished) == "function") {
-                                    WebPhone.onEstablished(msg);
-                                }
-                            }
-                        }
-                        break;
-                    }
+
                     case 'm_early_media':
                     {
                         if (e.session == WebPhone.ASession) {
@@ -527,21 +586,7 @@
                         }
                         break;
                     }
-					case "i_info":
-					{
-						if (e.session == WebPhone.ASession) {
-							if(e.getContentType() == "application/dtmf-relay"){
-								var dtmf = e.getContentString(); //Signal=9
-								dtmf = dtmf.substr(dtmf.indexOf("Signal=")+7,1);
-								var msg = {"callid": null,"dtmf":dtmf};
-								WebPhone.debug("onDtmfReceived:" + JSON.stringify(msg));
-								if (typeof(WebPhone.onDtmfReceived) == "function") {
-									WebPhone.onDtmfReceived(msg);
-								}
-							}
-						}
-						break;
-					}
+					
                 }
                 
             },
