@@ -103,7 +103,6 @@
             // Initialize call button
             btnRegister.disabled = false;
 
-            uiBtnCallSetText("Call");
             oReadyStateTimer = setInterval(function () {
                         if (document.readyState === "complete") {
                             clearInterval(oReadyStateTimer);
@@ -127,53 +126,24 @@
             btnRegister.disabled = b_connected || b_connecting;
             btnUnRegister.disabled = !b_connected && !b_connecting;
             btnCall.disabled = !(b_connected);
+			btnCall.onclick = function () {
+			    WebPhone.MakeCall(txtPhoneNumber.value);
+			}
             btnHangUp.disabled = true;
         }
-        //ui
-        function uiBtnCallSetText(s_text) {
-            switch (s_text) {
-                case "Call":
-                {
-                    var bDisableCallBtnOptions = false;
-                    btnCall.value = btnCall.innerHTML = bDisableCallBtnOptions ? 'Call' : 'Call <span id="spanCaret" class="caret">';
-                    btnCall.setAttribute("class", bDisableCallBtnOptions ? "btn btn-primary" : "btn btn-primary dropdown-toggle");
-                    btnCall.onclick = bDisableCallBtnOptions ? function () {
-                        WebPhone.MakeCall();
-                    } : null;
-                    ulCallOptions.style.visibility = bDisableCallBtnOptions ? "hidden" : "visible";
-                    if (!bDisableCallBtnOptions && ulCallOptions.parentNode != divBtnCallGroup) {
-                        divBtnCallGroup.appendChild(ulCallOptions);
-                    }
-                    else if (bDisableCallBtnOptions && ulCallOptions.parentNode == divBtnCallGroup) {
-                        document.body.appendChild(ulCallOptions);
-                    }
 
-                    break;
-                }
-                default:
-                {
-                    btnCall.value = btnCall.innerHTML = s_text;
-                    btnCall.setAttribute("class", "btn btn-primary");
-                    btnCall.onclick = function () {
-                        WebPhone.AnswerCall();
-                    };
-                    ulCallOptions.style.visibility = "hidden";
-                    if (ulCallOptions.parentNode == divBtnCallGroup) {
-                        document.body.appendChild(ulCallOptions);
-                    }
-                    break;
-                }
-            }
-        }
         //ui
         function uiCallTerminated(s_description) {
-            uiBtnCallSetText("Call");
+
             btnHangUp.value = 'HangUp';
             btnHoldRetrieve.value = 'Hold';
 			btnHoldRetrieve.onclick = function(){
-				WebPhone.HoldCall();
+				WebPhone.HoldCall(WebPhone.callid);
 			}
             btnCall.disabled = false;
+			btnCall.onclick = function () {
+                WebPhone.MakeCall(txtPhoneNumber.value);
+            };
             btnHangUp.disabled = true;
 			document.getElementById("ringbacktone").pause();
 			document.getElementById("ringtone").pause();
@@ -198,10 +168,15 @@
 		}
 		
         WebPhone.onReceived = function (e) {
-            uiBtnCallSetText('Answer');
             btnHangUp.value = 'HangUp';
-            btnCall.disabled = false;
             btnHangUp.disabled = false;
+			
+            btnCall.disabled = false;
+			btnCall.value = 'Answer';
+			btnCall.onclick = function () {
+                WebPhone.AnswerCall();
+            };
+			
             document.getElementById("ringtone").play();
             var sRemoteNumber = (e.caller || 'unknown');
             showNotifICall(sRemoteNumber);
@@ -235,7 +210,7 @@
             btnHoldRetrieve.value = 'Retrieve';
             btnHoldRetrieve.disabled = false;
 			btnHoldRetrieve.onclick = function () {
-				WebPhone.RetrieveCall();
+				WebPhone.RetrieveCall(WebPhone.callid);
 			};
             txtCallStatus.innerHTML = '<i>通话保持</i>';
         }
@@ -265,7 +240,7 @@
         WebPhone.onHeldFailed = function (e) {
             btnHoldRetrieve.value = 'Hold';
 			btnHoldRetrieve.onclick = function(){
-				WebPhone.HoldCall();
+				WebPhone.HoldCall(WebPhone.callid);
 			}
             btnHoldRetrieve.disabled = false;
             txtCallStatus.innerHTML = '<i>通话保持失败</i>';
@@ -276,7 +251,7 @@
             btnHoldRetrieve.value = 'Hold';
             btnHoldRetrieve.disabled = false;
 			btnHoldRetrieve.onclick = function(){
-				WebPhone.HoldCall();
+				WebPhone.HoldCall(WebPhone.callid);
 			}
             txtCallStatus.innerHTML = '<i>通话中</i>';
             
@@ -285,7 +260,7 @@
         WebPhone.onRetrieveFailed = function (e) {
             btnHoldRetrieve.disabled = false;
 		    btnHoldRetrieve.onclick = function(){
-				WebPhone.RetrieveCall();
+				WebPhone.RetrieveCall(WebPhone.callid);
 			}
             txtCallStatus.innerHTML = '<i>恢复通话失败</i>';
         }
@@ -307,9 +282,6 @@
             WebPhone.setLogLevel(txtLogLevel.value);
             WebPhone.Login(txtRealm.value, txtPrivateIdentity.value, txtPublicIdentity.value, txtPassword.value, txtDisplayName.value, txtWebsocketUrl.value, txtICEServer.value);
 			uiOnConnectionEvent(false,true);
-        }
-        function sipCallAudio() {
-            WebPhone.MakeCall(txtPhoneNumber.value);
         }
 
         function TransferCall() {
@@ -442,7 +414,7 @@
                 <tr>
                     <td align='center'>
                         <div id='divCallOptions' class='call-options' style='opacity: 0; margin-top: 0px'>
-                            <input type="button" class="btn" style="" id="btnHoldRetrieve" value="Hold" onclick='WebPhone.HoldCall();'/> &nbsp;
+                            <input type="button" class="btn" style="" id="btnHoldRetrieve" value="Hold" onclick='WebPhone.HoldCall(WebPhone.callid);'/> &nbsp;
                             <input type="button" class="btn" style="" id="btnTransfer" value="Transfer" onclick='TransferCall();'/> &nbsp;
 							<input type="button" class="btn" style="" value="0" onclick='WebPhone.SendDTMF(null,"0");'/>
 							<input type="button" class="btn" style="" value="1" onclick='WebPhone.SendDTMF(null,"1");'/>
@@ -481,11 +453,6 @@
 <!-- Glass Panel -->
 <div id='divGlassPanel' class='glass-panel' style='visibility:hidden'></div>
 
-<!-- Call button options -->
-<ul id="ulCallOptions" class="dropdown-menu" style="visibility:hidden">
-    <li><a href="#" onclick='sipCallAudio("call-audio");'>Audio</a></li>
-    <li class="divider"></li>
-</ul>
 
 <!-- Le javascript
 ================================================== -->
