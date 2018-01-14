@@ -4,7 +4,6 @@
             _thisPath: "",
 
             callid: null,
-            audioRemote: null,
 
             SessionS: {},
             userAgent: null,
@@ -39,11 +38,6 @@
             Init: function () {
                 WebPhone.debug("Init:");
                 WebPhone.info("WebPhone version=" + WebPhone._version);
-                var audio = document.createElement("audio");
-                //audio.setAttribute("id", "audio_remote");
-                audio.setAttribute("autoplay", "true");
-                document.body.appendChild(audio);
-                WebPhone.audioRemote = audio;
                 
                 if (typeof(SIP) == "undefined") {
                     WebPhone.error("SIP not init");
@@ -268,12 +262,11 @@
                     });
                     
                     session.on('terminated', function(message, cause) {
-                        //debugger;
+                        WebPhone.debug('terminated:' + cause);
                         if(message === null || cause === null){
                             return;
                         }
                         
-                        WebPhone.debug('terminated:' + cause);
                         var msg = {"callid":message.call_id,"reason":message.status_code ? message.status_code:200,"msg":cause?cause:"OK"};
                         WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
                         WebPhone.info("通话已挂断:" + msg.reason);
@@ -288,7 +281,15 @@
                     session.on('reinvite', function(session) {
                         WebPhone.debug('reinvite');
                     });
-                    
+
+                    session.on('hold', function (session,cause){
+						WebPhone.debug('hold');
+					});
+					
+					session.on('unhold',function(session,cause){
+						WebPhone.debug('unhold');
+					});
+
                     session.on('replaced', function (newSession) {
                         WebPhone.debug('replaced');
                     });
@@ -311,7 +312,15 @@
                         WebPhone.onCallCleared(msg);
                         delete WebPhone.SessionS[request.call_id];
                     });
+					
+					session.on('referRequested', function(context) {
+						WebPhone.debug('referRequested');
+					});
                     
+					session.on('refer', function(context) {
+						WebPhone.debug('refer');
+					});
+					
                     WebPhone.SessionS[call_id] = session;
                     WebPhone.callid = call_id;
                 }
@@ -363,16 +372,12 @@
             // 呼转
             TransferCall: function (callid, s_destination) {
                 WebPhone.debug("TransferCall,callid:" + callid+ ",destination:" + s_destination);
-                if (WebPhone.ASession) {
+                if (callid && WebPhone.SessionS[callid]) {
                     
-                    var err = WebPhone.ASession.transfer(s_destination)
-                    if(err != 0){ 
-                        WebPhone.error('Call transfer failed:'+err);
-                    }
-                    else {
-                        WebPhone.debug('Transfering the call...');
-                    }
-                    return err;
+                    var session = WebPhone.SessionS[callid].refer(s_destination);
+                    WebPhone.debug('Transfering the call...'+callid);
+
+                    return 0;
     
                 }
                 else{
@@ -453,19 +458,6 @@
             onSipSessionEvent: function (e) {
                 WebPhone.debug("收到Session事件：" + e.type);
                 switch (e.type) {
-                    
-                    case 'm_stream_audio_local_added':
-                    case 'm_stream_audio_local_removed':
-                    case 'm_stream_audio_remote_added':
-                    case 'm_stream_audio_remote_removed':
-                    {
-                        break;
-                    }
-                    case 'i_ect_new_call':
-                    {
-                        WebPhone.oSipSessionTransferCall = e.session;
-                        break;
-                    }
 
                     case 'm_early_media':
                     {
