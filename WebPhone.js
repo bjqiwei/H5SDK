@@ -74,17 +74,17 @@
                   allowLegacyNotifications: true,
                   //hackIpInContact: true,
                   //hackViaTcp: true,
-				  sessionDescriptionHandlerFactoryOptions: {
-					  constraints: {
+                  sessionDescriptionHandlerFactoryOptions: {
+                      constraints: {
                             audio: true,
                             video: false
                       },
-					  peerConnectionOptions: {
-						  rtcConfiguration:{
-							  iceServers:eval(txtICEServer) || []
-						  }
-					  }
-				  },
+                      peerConnectionOptions: {
+                          rtcConfiguration:{
+                              iceServers:eval(txtICEServer) || []
+                          }
+                      }
+                  },
                   registerExpires: 300,
                   wsServerMaxReconnection: 1,
                   userAgentString: "Avaya html5_client"
@@ -166,12 +166,12 @@
                 });
                 
                 WebPhone.userAgent.on('invite', function (session) {
-					var call_id = session.id.substr(0,session.id.indexOf(session.from_tag));
+                    var call_id = session.id.substr(0,session.id.indexOf(session.from_tag));
                     WebPhone.debug('invite:' + call_id);
                     WebPhone.SessionS[call_id] = session; 
                     WebPhone.callid = call_id;
                     WebPhone.bindEvent(session);
-					
+                    
                     var sRemoteNumber = session.remoteIdentity.uri.user || 'unknown';
                     var msg = {"callid": call_id, "caller": sRemoteNumber};
                     WebPhone.debug("onReceived:" + JSON.stringify(msg));
@@ -205,10 +205,10 @@
                 WebPhone.debug("getVersion:");
                 return WebPhone._version;
             },
-			
-			//绑定事件
-			bindEvent(session){
-				session.on('progress', function (response,cause) {
+            
+            //绑定事件
+            bindEvent(session){
+                session.on('progress', function (response,cause) {
                     //debugger;
                     WebPhone.debug('progress');
                     var msg = {callid: response.call_id,msg:cause};
@@ -220,7 +220,7 @@
                         }
                     }
                     else if(response.status_code == 180 || response.status_code == 183){
-					    WebPhone.debug("onDelivered:" + JSON.stringify(msg));
+                        WebPhone.debug("onDelivered:" + JSON.stringify(msg));
                         WebPhone.debug('远端振铃...');
                         if (typeof(WebPhone.onDelivered) == "function") {
                             WebPhone.onDelivered(msg);
@@ -228,8 +228,8 @@
                     }
                         
                 });
-					
-				session.on('accepted', function (data) {
+                    
+                session.on('accepted', function (data) {
                     WebPhone.debug('accepted');;
                     var msg = {"callid": data.call_id,"msg":data.reason_phrase};
                     WebPhone.debug("onEstablished:" + JSON.stringify(msg));
@@ -250,15 +250,17 @@
                     
                 session.on('terminated', function(message, cause) {
                     WebPhone.debug('terminated:' + cause);
-                    if(message === null || cause === null){
+                    
+                    var call_id = session.id.substr(0,session.id.indexOf(session.from_tag));
+                    if(!WebPhone.SessionS[call_id]){
                         return;
                     }
-                        
-                    var msg = {"callid":message.call_id,"reason":message.status_code ? message.status_code:200,"msg":cause?cause:"OK"};
+                    message = message || {};
+                    var msg = {"callid":call_id,"reason":message.status_code ? message.status_code:200,"msg":cause?cause:"OK"};
                     WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
                     WebPhone.info("通话已挂断:" + msg.reason);
                     WebPhone.onCallCleared(msg);
-                    delete WebPhone.SessionS[message.call_id];
+                    delete WebPhone.SessionS[call_id];
                 });
                     
                 session.on('cancel', function() {
@@ -270,21 +272,21 @@
                 });
 
                 session.on('hold', function (session,cause){
-					WebPhone.debug('hold');
-				});
-					
-				session.on('unhold',function(session,cause){
-					WebPhone.debug('unhold');
-				});
+                    WebPhone.debug('hold');
+                });
+                    
+                session.on('unhold',function(session,cause){
+                    WebPhone.debug('unhold');
+                });
 
-				session.on('reinviteAccepted',function(session){
-					WebPhone.debug('reinviteAccepted');
-				});
-					
-				session.on('reinviteFailed',function(session){
-					WebPhone.debug('reinviteFailed');
-				});
-					
+                session.on('reinviteAccepted',function(session){
+                    WebPhone.debug('reinviteAccepted');
+                });
+                    
+                session.on('reinviteFailed',function(session){
+                    WebPhone.debug('reinviteFailed');
+                });
+                    
                 session.on('replaced', function (newSession) {
                     WebPhone.debug('replaced');
                 });
@@ -307,16 +309,44 @@
                     WebPhone.onCallCleared(msg);
                     delete WebPhone.SessionS[request.call_id];
                 });
-					
-		    	session.on('referRequested', function(context) {
-				WebPhone.debug('referRequested');
-		    	});
                     
-				session.on('refer', function(context) {
-					WebPhone.debug('refer');
-				});
-			},
-			
+                session.on('referRequested', function(context) {
+                WebPhone.debug('referRequested');
+                });
+                
+                session.on('referRequestAccepted', function (referClientContext) {
+                    WebPhone.debug('referRequestAccepted');
+                });
+                
+                session.on('referRequestRejected', function (referClientContext) {
+                    WebPhone.debug('referRequestRejected');
+                });
+                
+                session.on('referProgress', function(referClientContext) {
+                    WebPhone.debug('referProgress');
+                });
+                
+                session.on('referAccepted', function (referClientContext) {
+                    WebPhone.debug('referAccepted');
+                });
+                
+                session.on('referRejected', function (referClientContext) {
+                    WebPhone.debug('referRejected');
+                });
+                
+                session.on('referInviteSent', function (referServerContext) {
+                    WebPhone.debug('referInviteSent');
+                });
+                
+                session.on('notify', function (request) {
+                    WebPhone.debug('notify');
+                });
+                
+                session.on('refer', function(context) {
+                    WebPhone.debug('refer');
+                });
+            },
+            
             //呼叫
             MakeCall: function (called) {
                 WebPhone.debug("MakeCall:" + called);
@@ -374,14 +404,28 @@
                 if (callid) {
                     WebPhone.debug('Terminating the call...'+callid);
                     
-                    WebPhone.SessionS[callid].terminate({status_code:reason});
+                    try{
+                        WebPhone.SessionS[callid].terminate({status_code:reason});
+                    }
+                    catch(e) {
+                        if (WebPhone.SessionS[callid].status === SIP.C.STATUS_TERMINATED){
+                            delete WebPhone.SessionS[callid];
+                        }
+                    };
                 }
                 else{
                     WebPhone.debug('Terminating all call...');
                     var call_id;
                     for(call_id in WebPhone.SessionS){
-                         WebPhone.debug('Terminating the call...'+call_id);
-                         WebPhone.SessionS[call_id].terminate({status_code:reason});
+                        WebPhone.debug('Terminating the call...'+call_id);
+                        try {
+                            WebPhone.SessionS[call_id].terminate({status_code:reason});
+                        }
+                        catch(e) {
+                            if (WebPhone.SessionS[callid].status === SIP.C.STATUS_TERMINATED){
+                                delete WebPhone.SessionS[callid];
+                            }
+                        };
                     }
                     
                 }
