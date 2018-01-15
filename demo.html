@@ -287,6 +287,14 @@
         function TransferCall() {
             WebPhone.TransferCall(WebPhone.callid, txtPhoneNumber.value);
         }
+		
+		var aleg = WebPhone.callid;
+		
+		function ConsultationCall(){
+			WebPhone.HoldCall(WebPhone.callid);
+			WebPhone.MakeCall(txtPhoneNumber.value);
+		}
+		
     </script>
 </head>
 <body>
@@ -416,6 +424,7 @@
                         <div id='divCallOptions' class='call-options' style='opacity: 0; margin-top: 0px'>
                             <input type="button" class="btn" style="" id="btnHoldRetrieve" value="Hold" onclick='WebPhone.HoldCall(WebPhone.callid);'/> &nbsp;
                             <input type="button" class="btn" style="" id="btnTransfer" value="Transfer" onclick='TransferCall();'/> &nbsp;
+							<input type="button" class="btn" style="" id="btnConsultaion" value="Consultaion" onclick='ConsultationCall();'/> &nbsp;
 							<input type="button" class="btn" style="" value="0" onclick='WebPhone.SendDTMF(null,"0");'/>
 							<input type="button" class="btn" style="" value="1" onclick='WebPhone.SendDTMF(null,"1");'/>
 							<input type="button" class="btn" style="" value="2" onclick='WebPhone.SendDTMF(null,"2");'/>

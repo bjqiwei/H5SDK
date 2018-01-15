@@ -1,6 +1,6 @@
 (function () {
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.3.22",
+            _version: "2.0.3.23",
             _thisPath: "",
 
             callid: null,
@@ -290,6 +290,14 @@
 						WebPhone.debug('unhold');
 					});
 
+					session.on('reinviteAccepted',function(session){
+						WebPhone.debug('reinviteAccepted');
+					});
+					
+					session.on('reinviteFailed',function(session){
+						WebPhone.debug('reinviteFailed');
+					});
+					
                     session.on('replaced', function (newSession) {
                         WebPhone.debug('replaced');
                     });
