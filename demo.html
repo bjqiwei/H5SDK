@@ -118,7 +118,7 @@
 		}
         //ui
         function showNotifICall(s_number) {
-            txtCallStatus.innerHTML = '<i>来电振铃</i>';
+            txtCallStatus.innerHTML = '<i>来电振铃['+s_number+']</i>';
         }
 
         //ui
@@ -126,6 +126,7 @@
             btnRegister.disabled = b_connected || b_connecting;
             btnUnRegister.disabled = !b_connected && !b_connecting;
             btnCall.disabled = !(b_connected);
+			btnCall.value = btnCall.innerHTML = 'Call';
 			btnCall.onclick = function () {
 			    WebPhone.MakeCall(txtPhoneNumber.value);
 			}
@@ -141,6 +142,7 @@
 				WebPhone.HoldCall(WebPhone.callid);
 			}
             btnCall.disabled = false;
+			btnCall.value = btnCall.innerHTML = 'Call';
 			btnCall.onclick = function () {
                 WebPhone.MakeCall(txtPhoneNumber.value);
             };
@@ -172,9 +174,9 @@
             btnHangUp.disabled = false;
 			
             btnCall.disabled = false;
-			btnCall.value = 'Answer';
+			btnCall.value = btnCall.innerHTML = 'Answer';
 			btnCall.onclick = function () {
-                WebPhone.AnswerCall();
+                WebPhone.AnswerCall(WebPhone.callid);
             };
 			
             document.getElementById("ringtone").play();
@@ -345,7 +347,7 @@
                         <label style="height: 100%">密码:</label>
                     </td>
                     <td>
-                        <input type="password" style="width: 100%; height: 100%" id="txtPassword" value="12345678"/>
+                        <input type="password" style="width: 100%; height: 100%" id="txtPassword" value="4321!@#$"/>
                     </td>
                 </tr>
                 <tr>
@@ -362,7 +364,7 @@
                         <label style="height: 100%">Websocket URL:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="wss://webrtc2.acloudcc.com:7732"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="wss://47.88.171.173:19665"/>
                     </td>
                 </tr>
 
@@ -409,7 +411,7 @@
                     <td colspan="1" align="right">
                         <div class="btn-toolbar" style="margin: 0; vertical-align:middle">
                             <div id="divBtnCallGroup" class="btn-group">
-                                <button id="btnCall" disabled class="btn btn-primary" data-toggle="dropdown">Call</button>
+                                <button id="btnCall" style="margin: 0; vertical-align:middle; height: 100%;" disabled class="btn btn-primary" data-toggle="dropdown">Call</button>
                             </div>
                             &nbsp;&nbsp;
                             <div class="btn-group">
