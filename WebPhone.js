@@ -100,8 +100,10 @@
                 
                 WebPhone.userAgent.on('disconnected', function(args){
                     var msg = {};
-                    msg.reason = args.code?args.code:1006;
-                    msg.msg = args.response ? args.response:"WebSocket connection error";
+                    args = args || {};
+                    args.transport = args.transport || {};
+                    msg.reason = args.code?args.code:args.transport.lastTransportError.code;
+                    msg.msg = args.transport.lastTransportError.reason ? args.transport.lastTransportError.reason:"WebSocket connection error";
                     WebPhone.debug("disconnected:" + JSON.stringify(msg));
                     if(WebPhone.userAgent != null && WebPhone.userAgent.status === SIP.UA.C.STATUS_STARTING){
                         WebPhone.error("登录失败:" + JSON.stringify(msg));
@@ -133,8 +135,9 @@
                 WebPhone.userAgent.on('unregistered', function(response,cause){
 
                     var msg = {};
-                    msg.reason = response? response.status_code:504;
-                    msg.msg = response?response.reason_phrase:cause;
+                    response = response || {};
+                    msg.reason = response.status_code ? response.status_code:504;
+                    msg.msg = response.reason_phrase?response.reason_phrase:cause;
                     WebPhone.debug("unregistered:" + JSON.stringify(msg));
                     if (WebPhone.userAgent != null){
                         if(WebPhone.userAgent.status === SIP.UA.C.STATUS_READY){
@@ -156,8 +159,9 @@
                 
                 WebPhone.userAgent.on('registrationFailed', function (response, cause) {
                     var msg = {};
-                    msg.reason = response.status_code? response.status_code:200;
-                    msg.msg = cause;
+                    response = response || {};
+                    msg.reason = response.status_code? response.status_code:404;
+                    msg.msg = response.reason_phrase?response.reason_phrase:cause;
                     WebPhone.debug("registrationFailed:" + JSON.stringify(msg));
                     WebPhone.error("登录失败:" + JSON.stringify(msg));
                     if (typeof(WebPhone.onConnectError) == "function") {
