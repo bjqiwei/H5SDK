@@ -97,6 +97,8 @@
     <script type="text/javascript">
         var oNotifICall;
         var oReadyStateTimer;
+		var consult_callid;
+		var newCall;
 
         window.onload = function () {
             window.console && window.console.info && window.console.info("location=" + window.location);
@@ -186,6 +188,10 @@
 
 
         WebPhone.onCallCleared = function (e) {
+			if(newCall === e.callid){
+				return;
+			}
+				
             divGlassPanel.style.visibility = 'hidden';
             uiCallTerminated("已挂机:" + e.reason);
         }
@@ -209,21 +215,51 @@
 
 
         WebPhone.onHeld = function (e) {
+		    if(e.callid === consult_callid){
+				btnConsultaion.value = 'Reconnect';
+				btnConsultaion.disabled = false;
+				btnConsultaion.onclick = function () {
+					WebPhone.ReconnectCall(consult_callid);
+				};
+				txtCallStatus.innerHTML = '<i>咨询通话保持</i>';
+				newCall = e.newCall;
+				
+				btnHoldRetrieve.disabled = true;
+				btnTransfer.disabled = true;
+				return;
+			}
+			
             btnHoldRetrieve.value = 'Retrieve';
             btnHoldRetrieve.disabled = false;
 			btnHoldRetrieve.onclick = function () {
 				WebPhone.RetrieveCall(WebPhone.callid);
 			};
+			
+			btnConsultaion.disabled = true;
+			
             txtCallStatus.innerHTML = '<i>通话保持</i>';
         }
 
 		WebPhone.onOriginated = function(e){
+			if(newCall === e.callid){
+				txtCallStatus.innerHTML = '<i>咨询外呼中</i>';
+				btnCall.disabled = true;
+				btnHangUp.disabled = false;
+				return;
+			}
+			
 			txtCallStatus.innerHTML = '<i>外呼中</i>';
 			btnCall.disabled = true;
             btnHangUp.disabled = false;
 		}
 		
 		WebPhone.onDelivered = function(e){
+			if(newCall === e.callid){
+				txtCallStatus.innerHTML = '<i>咨询对方振铃</i>';
+				btnCall.disabled = true;
+				btnHangUp.disabled = false;
+				return;
+			}
 			txtCallStatus.innerHTML = '<i>对方振铃</i>';
 			btnCall.disabled = true;
             btnHangUp.disabled = false;
@@ -231,9 +267,36 @@
 		
 		WebPhone.onEstablished = function(e)
 		{
+			delete consult_callid;
+			if(newCall === e.callid){
+				txtCallStatus.innerHTML = '<i>咨询通话中</i>';
+				btnCall.disabled = true;
+				btnHangUp.disabled = false;
+				return;
+			}
 			txtCallStatus.innerHTML = '<i>通话中</i>';
 			btnCall.disabled = true;
             btnHangUp.disabled = false;
+			
+			btnHoldRetrieve.disabled = false;
+			btnHoldRetrieve.value='Hold';
+			btnHoldRetrieve.onclick = function(){
+				WebPhone.HoldCall(WebPhone.callid);
+			};
+			
+			btnTransfer.disabled = false;
+			btnTransfer.value ='Transfer';
+			btnTransfer.onclick = function(){
+				TransferCall();
+			};
+
+			btnConsultaion.disabled = false;
+			btnConsultaion.value ='Consultation';
+			btnConsultaion.onclick = function(){
+				consult_callid  = WebPhone.callid;
+				WebPhone.ConsultationCall(consult_callid, txtPhoneNumber.value);
+			};
+			
 			document.getElementById("ringbacktone").pause();
 			document.getElementById("ringtone").pause();
 			divCallOptions.style.opacity = 1;
@@ -249,13 +312,31 @@
         }
 
         WebPhone.onRetrieved = function (e) {
- 
-            btnHoldRetrieve.value = 'Hold';
-            btnHoldRetrieve.disabled = false;
+			delete consult_callid;
+			
+			txtCallStatus.innerHTML = '<i>通话中</i>';
+			btnCall.disabled = true;
+            btnHangUp.disabled = false;
+			
+			btnHoldRetrieve.disabled = false;
+			btnHoldRetrieve.value='Hold';
 			btnHoldRetrieve.onclick = function(){
 				WebPhone.HoldCall(WebPhone.callid);
-			}
-            txtCallStatus.innerHTML = '<i>通话中</i>';
+			};
+			
+			btnTransfer.disabled = false;
+			btnTransfer.value ='Transfer';
+			btnTransfer.onclick = function(){
+				TransferCall();
+			};
+
+			btnConsultaion.disabled = false;
+			btnConsultaion.value ='Consultation';
+			btnConsultaion.onclick = function(){
+				consult_callid  = WebPhone.callid;
+				WebPhone.ConsultationCall(consult_callid, txtPhoneNumber.value);
+			};
+			
             
         }
 
@@ -289,13 +370,6 @@
         function TransferCall() {
             WebPhone.TransferCall(WebPhone.callid, txtPhoneNumber.value);
         }
-		
-		var aleg = WebPhone.callid;
-		
-		function ConsultationCall(){
-			WebPhone.HoldCall(WebPhone.callid);
-			WebPhone.MakeCall(txtPhoneNumber.value);
-		}
 		
     </script>
 </head>
@@ -364,7 +438,7 @@
                         <label style="height: 100%">Websocket URL:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="wss://47.88.171.173:19665"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtWebsocketUrl" value="ws://47.88.171.173:16177"/>
                     </td>
                 </tr>
 
@@ -373,7 +447,7 @@
                         <label style="height: 100%">ICE Servers:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ urls:'turn:webrtc2.acloudcc.com:3478', username: 'test',credential:'12#Test123'}]"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ url:'stun:47.88.171.173:3478'}]"/>
                     </td>
                 </tr>
 				<tr>
@@ -426,7 +500,7 @@
                         <div id='divCallOptions' class='call-options' style='opacity: 0; margin-top: 0px'>
                             <input type="button" class="btn" style="" id="btnHoldRetrieve" value="Hold" onclick='WebPhone.HoldCall(WebPhone.callid);'/> &nbsp;
                             <input type="button" class="btn" style="" id="btnTransfer" value="Transfer" onclick='TransferCall();'/> &nbsp;
-							<input type="button" class="btn" style="" id="btnConsultaion" value="Consultaion" onclick='ConsultationCall();'/> &nbsp;
+							<input type="button" class="btn" style="" id="btnConsultaion"/> &nbsp;
 							<input type="button" class="btn" style="" value="0" onclick='WebPhone.SendDTMF(null,"0");'/>
 							<input type="button" class="btn" style="" value="1" onclick='WebPhone.SendDTMF(null,"1");'/>
 							<input type="button" class="btn" style="" value="2" onclick='WebPhone.SendDTMF(null,"2");'/>
@@ -447,18 +521,6 @@
     </div>
 
     <br/>
-    <footer>
-
-        <!-- Creates all ATL/COM objects right now
-            Will open confirmation dialogs if not already done
-        -->
-        <object id="fakePluginInstance" classid="clsid:69E4A9D1-824C-40DA-9680-C7424A27B6A0" style="visibility:hidden;"></object>
-
-        <!--
-            NPAPI  browsers: Safari, Opera and Firefox
-        -->
-        <!--embed id="WebRtc4npapi" type="application/w4a" width='1' height='1' style='visibility:hidden;' /-->
-    </footer>
 </div>
 <!-- /container -->
 <!-- Glass Panel -->
