@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.3.28",
+            _version: "2.0.4.28",
             _thisPath: "",
 
             callid: null,
@@ -478,7 +478,7 @@
             },
             
             //呼叫
-            MakeCall: function (called) {
+            MakeCall: function (called,userdata) {
                 WebPhone.debug("MakeCall:" + called);
                 var session = null;
                 if (WebPhone.userAgent) {
@@ -488,7 +488,11 @@
                             audio: true,
                             video: false
                         }
-                    }});
+                    },
+					extraHeaders:[
+						"User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
+					]
+					});
                     
                     if (session == null) {
                         
@@ -522,11 +526,13 @@
                 return {result:2};
             },
             //摘机
-            AnswerCall: function (callid) {
+            AnswerCall: function (callid, userdata) {
                 WebPhone.debug("AnswerCall:" + callid);
                 if (callid && WebPhone.SessionS[callid]) {
                     WebPhone.debug('Connecting...');
-                    WebPhone.SessionS[callid].accept();
+                    WebPhone.SessionS[callid].accept({extraHeaders:[
+						"User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
+					]});
                 }
             },
             // 挂断 (SIP BYE or CANCEL)

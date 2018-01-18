@@ -130,7 +130,7 @@
             btnCall.disabled = !(b_connected);
 			btnCall.value = btnCall.innerHTML = 'Call';
 			btnCall.onclick = function () {
-			    WebPhone.MakeCall(txtPhoneNumber.value);
+			    WebPhone.MakeCall(txtPhoneNumber.value,txtUserData.value);
 			}
             btnHangUp.disabled = true;
         }
@@ -146,7 +146,7 @@
             btnCall.disabled = false;
 			btnCall.value = btnCall.innerHTML = 'Call';
 			btnCall.onclick = function () {
-                WebPhone.MakeCall(txtPhoneNumber.value);
+                WebPhone.MakeCall(txtPhoneNumber.value,txtUserData.value);
             };
             btnHangUp.disabled = true;
 			document.getElementById("ringbacktone").pause();
@@ -178,7 +178,7 @@
             btnCall.disabled = false;
 			btnCall.value = btnCall.innerHTML = 'Answer';
 			btnCall.onclick = function () {
-                WebPhone.AnswerCall(WebPhone.callid);
+                WebPhone.AnswerCall(WebPhone.callid,txtUserData.value);
             };
 			
             document.getElementById("ringtone").play();
@@ -482,6 +482,14 @@
                     </td>
                     <td>
                         <input type="text" style="width: 100%; height: 100%" id="txtLogLevel" value="debug"/>
+                    </td>
+                </tr>
+				<tr>
+                    <td>
+                        <label style="height: 100%">UserData:</label>
+                    </td>
+                    <td>
+                        <input type="text" style="width: 100%; height: 100%" id="txtUserData" value="{'recordfile':'uuid.wav'}"/>
                     </td>
                 </tr>
                 <tr>
