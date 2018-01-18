@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.6.28",
+            _version: "2.0.6.29",
             _thisPath: "",
 
             callid: null,
@@ -258,6 +258,10 @@
                     }
                     else if(response.status_code == 180 || response.status_code == 183){
                         
+						if(response.status_code == 183){
+							WebPhone.setupRemoteMedia(WebPhone.SessionS[WebPhone.callid]);
+						}
+						
                         WebPhone.debug("onDelivered:" + JSON.stringify(msg));
                         WebPhone.debug('远端振铃...');
                         if (typeof(WebPhone.onDelivered) == "function") {
@@ -274,6 +278,9 @@
                     if(WebPhone.SessionS[WebPhone.callid]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
                         msg.cause = WebPhone.Cause.Consultation;
                     }
+
+					WebPhone.setupRemoteMedia(WebPhone.SessionS[WebPhone.callid]);
+
                     WebPhone.debug("onEstablished:" + JSON.stringify(msg));
                     WebPhone.info("通话中");
                     if (typeof(WebPhone.onEstablished) == "function") {
@@ -305,6 +312,8 @@
                     if(typeof(WebPhone.onCallCleared) == "function"){
                         WebPhone.onCallCleared(msg);
                     }
+
+					document.body.removeChild(WebPhone.SessionS[call_id]._audio);
                     delete WebPhone.SessionS[call_id];
                 });
                     
@@ -442,7 +451,8 @@
                     if(typeof(WebPhone.onCallCleared) == "function"){
                         WebPhone.onCallCleared(msg);
                     }
-                    
+
+                    document.body.removeChild(WebPhone.SessionS[request.call_id]._audio);
                     delete WebPhone.SessionS[request.call_id];
                 });
                     
@@ -776,6 +786,53 @@
                     WebPhone.ASession.bMute = bMute;
                 }
             },
+
+			setupRemoteMedia:function(session){
+				if(!session)
+					return;
+				
+				var audio = session._audio;
+				if (!audio){
+					audio = document.createElement("audio");
+					//audio.setAttribute("id", "audio_remote");
+					audio.setAttribute("autoplay", "true");
+					document.body.appendChild(audio);
+					session._audio = audio;
+				}
+				
+				
+				session.sessionDescriptionHandler.on('addTrack', function () {
+				  WebPhone.setupRemoteMedia();
+				}.bind(session));
+
+				session.sessionDescriptionHandler.on('addStream', function () {
+				  WebPhone.setupRemoteMedia();
+				}.bind(session));
+				
+				
+				var pc = session.sessionDescriptionHandler.peerConnection;
+				var remoteStream;
+
+				if (pc.getReceivers) {
+					remoteStream = new window.MediaStream();
+					pc.getReceivers().forEach(function (receiver) {
+						var track = receiver.track;
+						if (track) {
+						  remoteStream.addTrack(track);
+						}
+					});
+				} else {
+					remoteStream = pc.getRemoteStreams()[0];
+				}
+					
+				if (audio) {
+					audio.srcObject = remoteStream;
+					audio.play().catch(function () {
+						WebPhone.error('play was rejected');
+					}.bind(session));
+				}
+					
+			},
 
             /**
              * 返回当前日期+时间
