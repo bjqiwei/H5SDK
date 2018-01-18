@@ -17,7 +17,8 @@
             STATUS_RECONNECTING:2,
             STATUS_CONNECTED: 3,
             STATUS_ALTERNATEING:4,
-            STATUS_CONFERENCEING:5
+            STATUS_CONFERENCEING:5,
+            STATUS_SINGLESTEPCONFERENCEING:6
             },
             
             Cause:{
@@ -340,6 +341,17 @@
 						return;
                     }
 
+                    if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_SINGLESTEPCONFERENCEING){
+                        WebPhone.SessionS[call_id]._status = WebPhone.STATUS.STATUS_CONNECTED;
+                        msg.cause = WebPhone.Cause.SingleStepConference;
+                        WebPhone.debug("onConferenced:"+JSON.stringify(msg));
+                        if (typeof(WebPhone.onConferenced) == "function") {
+                            WebPhone.onConferenced(msg);
+                        }
+                        WebPhone.debug('单步会议中');
+						return;
+                    }
+
                     if(this.local_hold === true){
                         
                         if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
@@ -588,8 +600,8 @@
             //发送DTMF
             SendDTMF: function (callid, c) {
                 var err = 1;
-                if (WebPhone.ASession && c) {
-                    err = WebPhone.ASession.dtmf(c);
+                if (callid && WebPhone.SessionS[callid] && c) {
+                    err = WebPhone.SessionS[callid].dtmf(c);
                 }
                 WebPhone.debug("SendDTMF,callid:" + callid + ",c:" + c + ",result:" + err);
             },
@@ -733,6 +745,21 @@
 				
 				WebPhone.SessionS[otherCall]._status = WebPhone.STATUS.STATUS_CONFERENCEING;
 				WebPhone.SessionS[otherCall].reinvite({extraHeaders:["P-Conf-MetaData: type=1;join=false"]});
+            },
+			
+			//单步会议
+            SingleStepConference:function (activeCall, destination,userdata){
+                WebPhone.debug("SingleStepConference,activeCall:" + activeCall +",destination:" + destination);
+                if (!activeCall || !WebPhone.SessionS[activeCall]){
+                    WebPhone.error("SingleStepConference, the is not exist.");
+                    return 1;
+                }
+                
+				WebPhone.SessionS[activeCall]._status = WebPhone.STATUS.STATUS_SINGLESTEPCONFERENCEING;
+				WebPhone.SessionS[activeCall].reinvite({extraHeaders:["P-Conf-MetaData: type=0;user=" + destination + ";join=true",
+				"User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
+				]});
+
             },
             
             // 静音或恢复呼叫

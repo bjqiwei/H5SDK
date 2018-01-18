@@ -328,7 +328,11 @@
 			};
 			
 			btnAlternate.disabled = true;
-			btnAlternate.disabled = true;
+			
+			btnConference.disabled = false;
+			btnConference.onclick = function(){
+				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,txtUserData.value);
+			}
 			
 			document.getElementById("ringbacktone").pause();
 			document.getElementById("ringtone").pause();
@@ -375,7 +379,11 @@
 			};
 			
             btnAlternate.disabled = true;
-			btnAlternate.disabled = true;
+			
+			btnConference.disabled = false;
+			btnConference.onclick = function(){
+				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,txtUserData.value);
+			}
         }
 
         WebPhone.onRetrieveFailed = function (e) {
