@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.5.28",
+            _version: "2.0.6.28",
             _thisPath: "",
 
             callid: null,
@@ -16,7 +16,8 @@
             STATUS_CONSULTATIONING: 1,
             STATUS_RECONNECTING:2,
             STATUS_CONNECTED: 3,
-            STATUS_ALTERNATEING:4
+            STATUS_ALTERNATEING:4,
+            STATUS_CONFERENCEING:5
             },
             
             Cause:{
@@ -28,8 +29,9 @@
                 NewCall:5,
                 NormalClearing:6,
                 SingleStepConference:7,
-                SingleStepTransfer:8,
-                Transfer:9
+                Conference:8,
+                SingleStepTransfer:9,
+                Transfer:10
             },
             /**
             *设置日志级别
@@ -326,6 +328,18 @@
                     var msg={callid:call_id};
                     WebPhone.callid = call_id;
                     WebPhone.debug('reinviteAccepted:' + JSON.stringify(msg));
+					                        
+                    if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_CONFERENCEING){
+						WebPhone.SessionS[call_id]._status = WebPhone.STATUS.STATUS_CONNECTED;
+                        msg.cause = WebPhone.Cause.Conference;
+						 WebPhone.debug("onConferenced:"+JSON.stringify(msg));
+                        if (typeof(WebPhone.onConferenced) == "function") {
+                            WebPhone.onConferenced(msg);
+                        }
+                        WebPhone.debug('咨询会议中');
+						return;
+                    }
+
                     if(this.local_hold === true){
                         
                         if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
@@ -339,7 +353,7 @@
                         if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_ALTERNATEING){
                             msg.cause = WebPhone.Cause.Alternate;
                         }
-                        
+
                         WebPhone.debug("onHeld:"+JSON.stringify(msg));
                         if (typeof(WebPhone.onHeld) == "function") {
                             WebPhone.onHeld(msg);
@@ -405,6 +419,11 @@
                     WebPhone.debug('bye:' + request.call_id);
                     var msg = {"callid":request.call_id,"reason":200,"msg":request.method};
                     WebPhone.callid = request.call_id;
+
+					if(WebPhone.SessionS[request.call_id]._status === WebPhone.STATUS.STATUS_CONFERENCEING){
+                        msg.cause = WebPhone.Cause.Conference;
+                    }
+
                     WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
                     WebPhone.info("通话已挂断:" + msg.reason);
                     
@@ -695,6 +714,25 @@
                 WebPhone.SessionS[otherCall]._status = WebPhone.STATUS.STATUS_ALTERNATEING;
                 WebPhone.HoldCall(activeCall);
                 WebPhone.RetrieveCall(otherCall);
+            },
+			
+			//咨询后会议
+            ConferenceCall:function (heldCall, otherCall){
+                WebPhone.debug("ConferenceCall,otherCall:" + otherCall+",heldCall:" + heldCall);
+                if (!heldCall || !WebPhone.SessionS[heldCall]){
+                    WebPhone.error("ConferenceCall, the heldCall is not exist.");
+                    return 1;
+                }
+                
+                if (!otherCall || !WebPhone.SessionS[otherCall]){
+                    WebPhone.error("ConferenceCall, the otherCall is not exist.");
+                    return 1;
+                }
+				WebPhone.SessionS[heldCall]._status = WebPhone.STATUS.STATUS_CONFERENCEING;
+				WebPhone.SessionS[heldCall].reinvite({extraHeaders:["P-Conf-MetaData: type=1;join=true"]});
+				
+				WebPhone.SessionS[otherCall]._status = WebPhone.STATUS.STATUS_CONFERENCEING;
+				WebPhone.SessionS[otherCall].reinvite({extraHeaders:["P-Conf-MetaData: type=1;join=false"]});
             },
             
             // 静音或恢复呼叫

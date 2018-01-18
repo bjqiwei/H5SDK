@@ -297,6 +297,12 @@
 				btnTransfer.onclick = function(){
 					WebPhone.TransferCall(otherCall, activeCall);
 				};
+				
+				btnConference.disabled = false;
+				btnConference.onclick = function(){
+					WebPhone.ConferenceCall(otherCall,activeCall);
+				}
+				
 				return;
 			}
 			txtCallStatus.innerHTML = '<i>通话中</i>';
@@ -321,6 +327,7 @@
 				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, txtUserData.value);
 			};
 			
+			btnAlternate.disabled = true;
 			btnAlternate.disabled = true;
 			
 			document.getElementById("ringbacktone").pause();
@@ -368,6 +375,7 @@
 			};
 			
             btnAlternate.disabled = true;
+			btnAlternate.disabled = true;
         }
 
         WebPhone.onRetrieveFailed = function (e) {
@@ -389,8 +397,15 @@
             btnTransfer.disabled = false;
         }
 
-
-
+		WebPhone.onConferenced = function(e){
+            txtCallStatus.innerHTML = '<i>会议中</i>';
+			btnHoldRetrieve.disabled = true;
+            btnTransfer.disabled = true;
+			btnConsultaion.disabled = true;
+			btnAlternate.disabled = true;
+			btnConference.disabled = true;
+		}
+		
         function sipRegister() {
             WebPhone.setLogLevel(txtLogLevel.value);
             WebPhone.Login(txtRealm.value, txtPrivateIdentity.value, txtPublicIdentity.value, txtPassword.value, txtDisplayName.value, txtWebsocketUrl.value, txtICEServer.value);
@@ -536,6 +551,7 @@
                             <input type="button" class="btn" style="" id="btnTransfer" value="Transfer"/> &nbsp;
 							<input type="button" class="btn" style="" id="btnConsultaion" value="Consultation"/> &nbsp;
 							<input type="button" class="btn" style="" id="btnAlternate" value="Alternate"/> &nbsp;
+							<input type="button" class="btn" style="" id="btnConference" value="Conference"/> &nbsp;
 							<input type="button" class="btn" style="" value="0" onclick='WebPhone.SendDTMF(null,"0");'/>
 							<input type="button" class="btn" style="" value="1" onclick='WebPhone.SendDTMF(null,"1");'/>
 							<input type="button" class="btn" style="" value="2" onclick='WebPhone.SendDTMF(null,"2");'/>
