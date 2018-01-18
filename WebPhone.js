@@ -1,15 +1,7 @@
 (function () {
 	
-	STATUS = {
-			// call states
-			STATUS_NULL: 0,
-			STATUS_CONSULTATIONING: 1,
-			STATUS_RECONNECTING:2,
-			STATUS_CONNECTED: 3
-	};
-	
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.3.26",
+            _version: "2.0.3.27",
             _thisPath: "",
 
             callid: null,
@@ -18,7 +10,27 @@
             userAgent: null,
             loglevel:"debug",
             
-            
+            STATUS:{
+			// call states
+			STATUS_NULL: 0,
+			STATUS_CONSULTATIONING: 1,
+			STATUS_RECONNECTING:2,
+			STATUS_CONNECTED: 3,
+			STATUS_ALTERNATEING:4
+			},
+			
+			Cause:{
+				Alternate:0,
+				CallCancelled:1,
+				CallNotAnswered:2,
+				Consultation:3,
+				MakeCall:4,
+				NewCall:5,
+				NormalClearing:6,
+				SingleStepConference:7,
+				SingleStepTransfer:8,
+				Transfer:9
+			},
             /**
             *设置日志级别
             * @param level:error,warn,info,debug
@@ -230,6 +242,9 @@
                     WebPhone.debug('progress');
                     var msg = {callid: response.call_id,msg:cause};
 					WebPhone.callid = response.call_id;
+					if(WebPhone.SessionS[response.call_id]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
+						msg.cause = WebPhone.Cause.Consultation;
+					}
                     if(response.status_code == 100){
                         WebPhone.debug("onOriginated:" + JSON.stringify(msg));
                         WebPhone.info("外呼中...");
@@ -238,6 +253,7 @@
                         }
                     }
                     else if(response.status_code == 180 || response.status_code == 183){
+						
                         WebPhone.debug("onDelivered:" + JSON.stringify(msg));
                         WebPhone.debug('远端振铃...');
                         if (typeof(WebPhone.onDelivered) == "function") {
@@ -247,10 +263,13 @@
                         
                 });
                     
-                session.on('accepted', function (data) {
+                session.on('accepted', function (data, cause) {
                     WebPhone.debug('accepted:');
-					WebPhone.callid = data.call_id;
-                    var msg = {"callid": data.call_id,"msg":data.reason_phrase};
+					WebPhone.callid = data.call_id || this.id.substr(0,this.id.indexOf(this.from_tag));
+                    var msg = {"callid": WebPhone.callid,"msg":cause};
+					if(WebPhone.SessionS[WebPhone.callid]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
+						msg.cause = WebPhone.Cause.Consultation;
+					}
                     WebPhone.debug("onEstablished:" + JSON.stringify(msg));
                     WebPhone.info("通话中");
                     if (typeof(WebPhone.onEstablished) == "function") {
@@ -279,7 +298,9 @@
                     var msg = {"callid":call_id,"reason":message.status_code ? message.status_code:200,"msg":cause?cause:"OK"};
                     WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
                     WebPhone.info("通话已挂断:" + msg.reason);
-                    WebPhone.onCallCleared(msg);
+					if(typeof(WebPhone.onCallCleared) == "function"){
+						WebPhone.onCallCleared(msg);
+					}
                     delete WebPhone.SessionS[call_id];
                 });
                     
@@ -306,10 +327,16 @@
                     WebPhone.debug('reinviteAccepted:' + JSON.stringify(msg));
 					if(this.local_hold === true){
 						
-						if(WebPhone.SessionS[call_id]._status === STATUS.STATUS_CONSULTATIONING){
+						if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
 							var result = WebPhone.MakeCall(WebPhone.SessionS[call_id]._consultNumber);
 							msg.newCall = result.callid;
+							msg.cause = WebPhone.Cause.Consultation;
+							WebPhone.SessionS[msg.newCall]._status = WebPhone.STATUS.STATUS_CONSULTATIONING;
 							WebPhone.SessionS[call_id]._newCall = result.callid;
+						}
+						
+						if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_ALTERNATEING){
+							msg.cause = WebPhone.Cause.Alternate;
 						}
 						
                         WebPhone.debug("onHeld:"+JSON.stringify(msg));
@@ -319,11 +346,17 @@
 						WebPhone.debug('通话保持');
 					}
 					else if(this.local_hold === false){
-						WebPhone.debug("onRetrieved:" + JSON.stringify(msg));
-						if(WebPhone.SessionS[call_id]._status === STATUS.STATUS_RECONNECTING){
-							WebPhone.SessionS[call_id]._status = STATUS.STATUS_CONNECTED;
+						
+						if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_RECONNECTING){
+							WebPhone.SessionS[call_id]._status = WebPhone.STATUS.STATUS_CONNECTED;
+							msg.cause = WebPhone.Cause.Consultation;
 						}
 						
+						if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_ALTERNATEING){
+							WebPhone.SessionS[call_id]._status = WebPhone.STATUS.STATUS_CONNECTED;
+							msg.cause = WebPhone.Cause.Alternate;
+						}
+						WebPhone.debug("onRetrieved:" + JSON.stringify(msg));
 						if (typeof(WebPhone.onRetrieved) == "function") {
 							WebPhone.onRetrieved(msg);
 						}
@@ -373,7 +406,11 @@
 					WebPhone.callid = request.call_id;
                     WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
                     WebPhone.info("通话已挂断:" + msg.reason);
-                    WebPhone.onCallCleared(msg);
+					
+					if(typeof(WebPhone.onCallCleared) == "function"){
+						WebPhone.onCallCleared(msg);
+					}
+					
                     delete WebPhone.SessionS[request.call_id];
                 });
                     
@@ -582,7 +619,7 @@
 			ConsultationCall:function(callid,called){
 				WebPhone.debug("ConsultationCall,callid:" + callid + ",called:" + called);
                 if (callid && WebPhone.SessionS[callid]) {
-					WebPhone.SessionS[callid]._status = STATUS.STATUS_CONSULTATIONING;
+					WebPhone.SessionS[callid]._status = WebPhone.STATUS.STATUS_CONSULTATIONING;
 					WebPhone.SessionS[callid]._consultNumber = called;
                     WebPhone.SessionS[callid].hold();
                     WebPhone.debug('hold the call...' + callid);
@@ -600,21 +637,38 @@
              * @param callid
              * @constructor
              */
-            ReconnectCall: function (callid) {
-                WebPhone.debug("ReconnectCall,callid:" + callid);
-                if (callid && WebPhone.SessionS[callid]) {
-					WebPhone.SessionS[callid]._status = STATUS.STATUS_RECONNECTING;
-					var newCall = WebPhone.SessionS[callid]._newCall;
-					WebPhone.ClearCall(newCall);
-                    WebPhone.SessionS[callid].unhold();
-                    WebPhone.debug('ReconnectCall the call...' + callid);                    
-                    return 0;
-                  
-                } else {
+            ReconnectCall: function (activeCall, heldCall) {
+                WebPhone.debug("ReconnectCall,activeCall:" + activeCall+",heldCall:" + heldCall);
+                if (heldCall && WebPhone.SessionS[heldCall]) {
+					WebPhone.SessionS[heldCall]._status = WebPhone.STATUS.STATUS_RECONNECTING;
+                    WebPhone.debug('ReconnectCall the call...' + heldCall);                    
+                    WebPhone.SessionS[heldCall].unhold();
+                }				
+				else {
                     WebPhone.error("ReconnectCall, the call is not exist.");
-                    return 2;
                 }
+								
+			    WebPhone.ClearCall(activeCall);
+
             },
+			
+			//切换通话
+			AlternateCall:function (activeCall,otherCall){
+				WebPhone.debug("AlternateCall,activeCall:" + activeCall+",otherCall:" + otherCall);
+				if (!activeCall || !WebPhone.SessionS[activeCall]){
+					WebPhone.error("AlternateCall, the activeCall is not exist.");
+					return 1;
+				}
+				
+				if (!otherCall || !WebPhone.SessionS[otherCall]){
+					WebPhone.error("AlternateCall, the otherCall is not exist.");
+					return 1;
+				}
+				WebPhone.SessionS[activeCall]._status = WebPhone.STATUS.STATUS_ALTERNATEING;
+				WebPhone.SessionS[otherCall]._status = WebPhone.STATUS.STATUS_ALTERNATEING;
+				WebPhone.HoldCall(activeCall);
+				WebPhone.RetrieveCall(otherCall);
+			},
 			
             // 静音或恢复呼叫
             MuteCall: function () {
