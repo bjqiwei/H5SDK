@@ -306,7 +306,7 @@
 			btnTransfer.disabled = false;
 			btnTransfer.value ='Transfer';
 			btnTransfer.onclick = function(){
-				TransferCall();
+				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value);
 			};
 
 			btnConsultaion.disabled = false;
@@ -352,7 +352,7 @@
 			btnTransfer.disabled = false;
 			btnTransfer.value ='Transfer';
 			btnTransfer.onclick = function(){
-				TransferCall();
+				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value);
 			};
 
 			btnConsultaion.disabled = false;
@@ -389,10 +389,6 @@
             WebPhone.setLogLevel(txtLogLevel.value);
             WebPhone.Login(txtRealm.value, txtPrivateIdentity.value, txtPublicIdentity.value, txtPassword.value, txtDisplayName.value, txtWebsocketUrl.value, txtICEServer.value);
 			uiOnConnectionEvent(false,true);
-        }
-
-        function TransferCall() {
-            WebPhone.TransferCall(activeCall, txtPhoneNumber.value);
         }
 		
     </script>
@@ -471,7 +467,7 @@
                         <label style="height: 100%">ICE Servers:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ url:'stun:47.88.171.173:3478'}]"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtICEServer" value="[{ urls:'stun:47.88.171.173:3478'}]"/>
                     </td>
                 </tr>
 				<tr>
@@ -523,7 +519,7 @@
                     <td align='center'>
                         <div id='divCallOptions' class='call-options' style='opacity: 0; margin-top: 0px'>
                             <input type="button" class="btn" style="" id="btnHoldRetrieve" value="Hold" onclick='WebPhone.HoldCall(WebPhone.callid);'/> &nbsp;
-                            <input type="button" class="btn" style="" id="btnTransfer" value="Transfer" onclick='TransferCall();'/> &nbsp;
+                            <input type="button" class="btn" style="" id="btnTransfer" value="Transfer"/> &nbsp;
 							<input type="button" class="btn" style="" id="btnConsultaion" value="Consultation"/> &nbsp;
 							<input type="button" class="btn" style="" id="btnAlternate" value="Alternate"/> &nbsp;
 							<input type="button" class="btn" style="" value="0" onclick='WebPhone.SendDTMF(null,"0");'/>

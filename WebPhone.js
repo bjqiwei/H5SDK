@@ -1,5 +1,5 @@
 (function () {
-	
+    
     window.WebPhone = window.WebPhone || {
             _version: "2.0.3.27",
             _thisPath: "",
@@ -11,26 +11,26 @@
             loglevel:"debug",
             
             STATUS:{
-			// call states
-			STATUS_NULL: 0,
-			STATUS_CONSULTATIONING: 1,
-			STATUS_RECONNECTING:2,
-			STATUS_CONNECTED: 3,
-			STATUS_ALTERNATEING:4
-			},
-			
-			Cause:{
-				Alternate:0,
-				CallCancelled:1,
-				CallNotAnswered:2,
-				Consultation:3,
-				MakeCall:4,
-				NewCall:5,
-				NormalClearing:6,
-				SingleStepConference:7,
-				SingleStepTransfer:8,
-				Transfer:9
-			},
+            // call states
+            STATUS_NULL: 0,
+            STATUS_CONSULTATIONING: 1,
+            STATUS_RECONNECTING:2,
+            STATUS_CONNECTED: 3,
+            STATUS_ALTERNATEING:4
+            },
+            
+            Cause:{
+                Alternate:0,
+                CallCancelled:1,
+                CallNotAnswered:2,
+                Consultation:3,
+                MakeCall:4,
+                NewCall:5,
+                NormalClearing:6,
+                SingleStepConference:7,
+                SingleStepTransfer:8,
+                Transfer:9
+            },
             /**
             *设置日志级别
             * @param level:error,warn,info,debug
@@ -89,6 +89,7 @@
                   authorizationUser: sipid,
                   password: pwd,
                   displayName: txtDisplayName,
+                  replaces: SIP.C.supported.SUPPORTED,
                   traceSip: true,
                   //register: true,
                   autostart: false,
@@ -109,9 +110,9 @@
                   },
                   registerExpires: 300,
                   wsServerMaxReconnection: 1,
-				  log:{
-					  level:WebPhone.loglevel === 'info' ? 'log': WebPhone.loglevel
-				  },
+                  log:{
+                      level:WebPhone.loglevel === 'info' ? 'log': WebPhone.loglevel
+                  },
                   userAgentString: "Avaya html5_client"
                 });  
                 
@@ -241,10 +242,10 @@
                     //debugger;
                     WebPhone.debug('progress');
                     var msg = {callid: response.call_id,msg:cause};
-					WebPhone.callid = response.call_id;
-					if(WebPhone.SessionS[response.call_id]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
-						msg.cause = WebPhone.Cause.Consultation;
-					}
+                    WebPhone.callid = response.call_id;
+                    if(WebPhone.SessionS[response.call_id]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
+                        msg.cause = WebPhone.Cause.Consultation;
+                    }
                     if(response.status_code == 100){
                         WebPhone.debug("onOriginated:" + JSON.stringify(msg));
                         WebPhone.info("外呼中...");
@@ -253,7 +254,7 @@
                         }
                     }
                     else if(response.status_code == 180 || response.status_code == 183){
-						
+                        
                         WebPhone.debug("onDelivered:" + JSON.stringify(msg));
                         WebPhone.debug('远端振铃...');
                         if (typeof(WebPhone.onDelivered) == "function") {
@@ -265,11 +266,11 @@
                     
                 session.on('accepted', function (data, cause) {
                     WebPhone.debug('accepted:');
-					WebPhone.callid = data.call_id || this.id.substr(0,this.id.indexOf(this.from_tag));
+                    WebPhone.callid = data.call_id || this.id.substr(0,this.id.indexOf(this.from_tag));
                     var msg = {"callid": WebPhone.callid,"msg":cause};
-					if(WebPhone.SessionS[WebPhone.callid]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
-						msg.cause = WebPhone.Cause.Consultation;
-					}
+                    if(WebPhone.SessionS[WebPhone.callid]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
+                        msg.cause = WebPhone.Cause.Consultation;
+                    }
                     WebPhone.debug("onEstablished:" + JSON.stringify(msg));
                     WebPhone.info("通话中");
                     if (typeof(WebPhone.onEstablished) == "function") {
@@ -293,14 +294,14 @@
                     if(!WebPhone.SessionS[call_id]){
                         return;
                     }
-					WebPhone.callid = call_id;
+                    WebPhone.callid = call_id;
                     message = message || {};
                     var msg = {"callid":call_id,"reason":message.status_code ? message.status_code:200,"msg":cause?cause:"OK"};
                     WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
                     WebPhone.info("通话已挂断:" + msg.reason);
-					if(typeof(WebPhone.onCallCleared) == "function"){
-						WebPhone.onCallCleared(msg);
-					}
+                    if(typeof(WebPhone.onCallCleared) == "function"){
+                        WebPhone.onCallCleared(msg);
+                    }
                     delete WebPhone.SessionS[call_id];
                 });
                     
@@ -321,68 +322,68 @@
                 });
 
                 session.on('reinviteAccepted',function(session){
-					var call_id = session.id.substr(0,session.id.indexOf(session.from_tag));
-					var msg={callid:call_id};
-					WebPhone.callid = call_id;
+                    var call_id = session.id.substr(0,session.id.indexOf(session.from_tag));
+                    var msg={callid:call_id};
+                    WebPhone.callid = call_id;
                     WebPhone.debug('reinviteAccepted:' + JSON.stringify(msg));
-					if(this.local_hold === true){
-						
-						if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
-							var result = WebPhone.MakeCall(WebPhone.SessionS[call_id]._consultNumber);
-							msg.newCall = result.callid;
-							msg.cause = WebPhone.Cause.Consultation;
-							WebPhone.SessionS[msg.newCall]._status = WebPhone.STATUS.STATUS_CONSULTATIONING;
-							WebPhone.SessionS[call_id]._newCall = result.callid;
-						}
-						
-						if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_ALTERNATEING){
-							msg.cause = WebPhone.Cause.Alternate;
-						}
-						
+                    if(this.local_hold === true){
+                        
+                        if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
+                            var result = WebPhone.MakeCall(WebPhone.SessionS[call_id]._consultNumber);
+                            msg.newCall = result.callid;
+                            msg.cause = WebPhone.Cause.Consultation;
+                            WebPhone.SessionS[msg.newCall]._status = WebPhone.STATUS.STATUS_CONSULTATIONING;
+                            WebPhone.SessionS[call_id]._newCall = result.callid;
+                        }
+                        
+                        if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_ALTERNATEING){
+                            msg.cause = WebPhone.Cause.Alternate;
+                        }
+                        
                         WebPhone.debug("onHeld:"+JSON.stringify(msg));
-						if (typeof(WebPhone.onHeld) == "function") {
-							WebPhone.onHeld(msg);
-						}
-						WebPhone.debug('通话保持');
-					}
-					else if(this.local_hold === false){
-						
-						if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_RECONNECTING){
-							WebPhone.SessionS[call_id]._status = WebPhone.STATUS.STATUS_CONNECTED;
-							msg.cause = WebPhone.Cause.Consultation;
-						}
-						
-						if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_ALTERNATEING){
-							WebPhone.SessionS[call_id]._status = WebPhone.STATUS.STATUS_CONNECTED;
-							msg.cause = WebPhone.Cause.Alternate;
-						}
-						WebPhone.debug("onRetrieved:" + JSON.stringify(msg));
-						if (typeof(WebPhone.onRetrieved) == "function") {
-							WebPhone.onRetrieved(msg);
-						}
-						WebPhone.debug('通话恢复');
-					}
+                        if (typeof(WebPhone.onHeld) == "function") {
+                            WebPhone.onHeld(msg);
+                        }
+                        WebPhone.debug('通话保持');
+                    }
+                    else if(this.local_hold === false){
+                        
+                        if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_RECONNECTING){
+                            WebPhone.SessionS[call_id]._status = WebPhone.STATUS.STATUS_CONNECTED;
+                            msg.cause = WebPhone.Cause.Consultation;
+                        }
+                        
+                        if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_ALTERNATEING){
+                            WebPhone.SessionS[call_id]._status = WebPhone.STATUS.STATUS_CONNECTED;
+                            msg.cause = WebPhone.Cause.Alternate;
+                        }
+                        WebPhone.debug("onRetrieved:" + JSON.stringify(msg));
+                        if (typeof(WebPhone.onRetrieved) == "function") {
+                            WebPhone.onRetrieved(msg);
+                        }
+                        WebPhone.debug('通话恢复');
+                    }
                 });
                     
                 session.on('reinviteFailed',function(session){
-					var call_id = session.id.substr(0,session.id.indexOf(session.from_tag));
+                    var call_id = session.id.substr(0,session.id.indexOf(session.from_tag));
                     var msg={callid:call_id, reason:session.status_code || 504, msg:session.reason_phrase || "error"};
-					WebPhone.callid = call_id;
+                    WebPhone.callid = call_id;
                     WebPhone.debug('reinviteFailed:' + JSON.stringify(msg));
-					if(this.local_hold === true){
-						WebPhone.debug("onHeldFailed:"+JSON.stringify(msg));
-						if (typeof(WebPhone.onHeldFailed) == "function") {
-							WebPhone.onHeldFailed(msg);
-						}
-						WebPhone.error('通话保持失败');
-					}
-					else if(this.local_hold === false){
-						WebPhone.debug("onRetrieveFailed:" + JSON.stringify(msg));
-						if (typeof(WebPhone.onRetrieveFailed) == "function") {
-							WebPhone.onRetrieveFailed(msg);
-						}
-						WebPhone.debug('通话恢复失败');
-					}
+                    if(this.local_hold === true){
+                        WebPhone.debug("onHeldFailed:"+JSON.stringify(msg));
+                        if (typeof(WebPhone.onHeldFailed) == "function") {
+                            WebPhone.onHeldFailed(msg);
+                        }
+                        WebPhone.error('通话保持失败');
+                    }
+                    else if(this.local_hold === false){
+                        WebPhone.debug("onRetrieveFailed:" + JSON.stringify(msg));
+                        if (typeof(WebPhone.onRetrieveFailed) == "function") {
+                            WebPhone.onRetrieveFailed(msg);
+                        }
+                        WebPhone.debug('通话恢复失败');
+                    }
                 });
                     
                 session.on('replaced', function (newSession) {
@@ -392,7 +393,7 @@
                 session.on('dtmf', function(request, dtmf) {
                     WebPhone.debug('dtmf');
                     var msg = {"callid": request.call_id,"dtmf":dtmf};
-					WebPhone.callid = request.call_id;
+                    WebPhone.callid = request.call_id;
                     WebPhone.debug("onDtmfReceived:" + JSON.stringify(msg));
                     if (typeof(WebPhone.onDtmfReceived) == "function") {
                         WebPhone.onDtmfReceived(msg);
@@ -403,14 +404,14 @@
                     //debugger;
                     WebPhone.debug('bye:' + request.call_id);
                     var msg = {"callid":request.call_id,"reason":200,"msg":request.method};
-					WebPhone.callid = request.call_id;
+                    WebPhone.callid = request.call_id;
                     WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
                     WebPhone.info("通话已挂断:" + msg.reason);
-					
-					if(typeof(WebPhone.onCallCleared) == "function"){
-						WebPhone.onCallCleared(msg);
-					}
-					
+                    
+                    if(typeof(WebPhone.onCallCleared) == "function"){
+                        WebPhone.onCallCleared(msg);
+                    }
+                    
                     delete WebPhone.SessionS[request.call_id];
                 });
                     
@@ -423,9 +424,9 @@
                 });
                 
                 session.on('referRequestRejected', function (referClientContext) {
-					var call_id = referClientContext.call_id;
-					var msg = {callid:call_id,reason:referClientContext.status_code,msg:referClientContext.reason_phrase};
-					WebPhone.callid = referClientContext.call_id;
+                    var call_id = referClientContext.call_id;
+                    var msg = {callid:call_id,reason:referClientContext.status_code,msg:referClientContext.reason_phrase};
+                    WebPhone.callid = referClientContext.call_id;
                     WebPhone.debug('referRequestRejected:' + JSON.stringify(msg));
                     WebPhone.debug("onTransferFailed:" + JSON.stringify(msg));
                     if (typeof(WebPhone.onTransferFailed) == "function") {
@@ -443,9 +444,9 @@
                 });
                 
                 session.on('referRejected', function (referClientContext) {
-					var call_id = referClientContext.call_id;
-					var msg = {callid:call_id,reason:referClientContext.status_code,msg:referClientContext.reason_phrase};
-					WebPhone.callid = call_id;
+                    var call_id = referClientContext.call_id;
+                    var msg = {callid:call_id,reason:referClientContext.status_code,msg:referClientContext.reason_phrase};
+                    WebPhone.callid = call_id;
                     WebPhone.debug('referRejected:' + JSON.stringify(msg));
                     WebPhone.debug("onTransferFailed:" + JSON.stringify(msg));
                     if (typeof(WebPhone.onTransferFailed) == "function") {
@@ -459,18 +460,20 @@
                 });
                 
                 session.on('notify', function (request) {
-                    WebPhone.debug('notify');
-                });
-                
-                session.on('refer', function(context) {
-					var msg = {"callid": context.call_id};
-					WebPhone.callid = context.call_id;
-                    WebPhone.debug('refer:' + JSON.stringify(msg));
+                    var msg = {"callid": request.call_id};
+                    WebPhone.callid = request.call_id;
+                    WebPhone.debug('notify:' + JSON.stringify(msg));
                     WebPhone.debug("onTransferred:" + JSON.stringify(msg));
                     if (typeof(WebPhone.onTransferred) == "function") {
                         WebPhone.onTransferred(msg);
                         }
                     WebPhone.info('呼叫转接结束');
+                });
+                
+                session.on('refer', function(context) {
+                    var msg = {"callid": context.call_id};
+                    WebPhone.callid = context.call_id;
+                    WebPhone.debug('refer:' + JSON.stringify(msg));
                 });
             },
             
@@ -506,7 +509,7 @@
 
                     WebPhone.SessionS[call_id] = session;
                     WebPhone.callid = call_id;
-					return {result:0,callid:call_id};
+                    return {result:0,callid:call_id};
                 }
                 else if (typeof(WebPhone.onMakeCallFailed) == "function") {
                     var msg = {};
@@ -566,16 +569,16 @@
                 WebPhone.debug("SendDTMF,callid:" + callid + ",c:" + c + ",result:" + err);
             },
             // 呼转
-            TransferCall: function (callid, s_destination) {
-                WebPhone.debug("TransferCall,callid:" + callid+ ",destination:" + s_destination);
+            SingleStepTransferCall: function (callid, s_destination) {
+                WebPhone.debug("SingleStepTransferCall,callid:" + callid+ ",destination:" + s_destination);
                 if (callid && WebPhone.SessionS[callid]) {
-                    WebPhone.debug('Transfering the call...'+callid);                    
+                    WebPhone.debug('SingleStepTransfering the call...'+callid);                    
                     var session = WebPhone.SessionS[callid].refer(s_destination);
                     return 0;
     
                 }
                 else{
-                    WebPhone.error("TransferCall, the call is not exist.");
+                    WebPhone.error("SingleStepTransferCall, the call is not exist.");
                     return 1;
                 }
             },
@@ -614,13 +617,13 @@
                     return 2;
                 }
             },
-			
-			//咨询
-			ConsultationCall:function(callid,called){
-				WebPhone.debug("ConsultationCall,callid:" + callid + ",called:" + called);
+            
+            //咨询
+            ConsultationCall:function(callid,called){
+                WebPhone.debug("ConsultationCall,callid:" + callid + ",called:" + called);
                 if (callid && WebPhone.SessionS[callid]) {
-					WebPhone.SessionS[callid]._status = WebPhone.STATUS.STATUS_CONSULTATIONING;
-					WebPhone.SessionS[callid]._consultNumber = called;
+                    WebPhone.SessionS[callid]._status = WebPhone.STATUS.STATUS_CONSULTATIONING;
+                    WebPhone.SessionS[callid]._consultNumber = called;
                     WebPhone.SessionS[callid].hold();
                     WebPhone.debug('hold the call...' + callid);
                     //WebPhone.MakeCall(called);                    
@@ -630,9 +633,9 @@
                     WebPhone.error("ConsultationCall, the call is not exist.");
                     return 3;
                 }
-			},
-			
-			/**
+            },
+            
+            /**
              * 取消咨询
              * @param callid
              * @constructor
@@ -640,36 +643,36 @@
             ReconnectCall: function (activeCall, heldCall) {
                 WebPhone.debug("ReconnectCall,activeCall:" + activeCall+",heldCall:" + heldCall);
                 if (heldCall && WebPhone.SessionS[heldCall]) {
-					WebPhone.SessionS[heldCall]._status = WebPhone.STATUS.STATUS_RECONNECTING;
+                    WebPhone.SessionS[heldCall]._status = WebPhone.STATUS.STATUS_RECONNECTING;
                     WebPhone.debug('ReconnectCall the call...' + heldCall);                    
                     WebPhone.SessionS[heldCall].unhold();
-                }				
-				else {
+                }
+                else {
                     WebPhone.error("ReconnectCall, the call is not exist.");
                 }
-								
-			    WebPhone.ClearCall(activeCall);
+
+                WebPhone.ClearCall(activeCall);
 
             },
-			
-			//切换通话
-			AlternateCall:function (activeCall,otherCall){
-				WebPhone.debug("AlternateCall,activeCall:" + activeCall+",otherCall:" + otherCall);
-				if (!activeCall || !WebPhone.SessionS[activeCall]){
-					WebPhone.error("AlternateCall, the activeCall is not exist.");
-					return 1;
-				}
-				
-				if (!otherCall || !WebPhone.SessionS[otherCall]){
-					WebPhone.error("AlternateCall, the otherCall is not exist.");
-					return 1;
-				}
-				WebPhone.SessionS[activeCall]._status = WebPhone.STATUS.STATUS_ALTERNATEING;
-				WebPhone.SessionS[otherCall]._status = WebPhone.STATUS.STATUS_ALTERNATEING;
-				WebPhone.HoldCall(activeCall);
-				WebPhone.RetrieveCall(otherCall);
-			},
-			
+            
+            //切换通话
+            AlternateCall:function (activeCall,otherCall){
+                WebPhone.debug("AlternateCall,activeCall:" + activeCall+",otherCall:" + otherCall);
+                if (!activeCall || !WebPhone.SessionS[activeCall]){
+                    WebPhone.error("AlternateCall, the activeCall is not exist.");
+                    return 1;
+                }
+                
+                if (!otherCall || !WebPhone.SessionS[otherCall]){
+                    WebPhone.error("AlternateCall, the otherCall is not exist.");
+                    return 1;
+                }
+                WebPhone.SessionS[activeCall]._status = WebPhone.STATUS.STATUS_ALTERNATEING;
+                WebPhone.SessionS[otherCall]._status = WebPhone.STATUS.STATUS_ALTERNATEING;
+                WebPhone.HoldCall(activeCall);
+                WebPhone.RetrieveCall(otherCall);
+            },
+            
             // 静音或恢复呼叫
             MuteCall: function () {
                 if (WebPhone.ASession) {
