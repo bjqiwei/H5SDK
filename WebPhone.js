@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.4.28",
+            _version: "2.0.5.28",
             _thisPath: "",
 
             callid: null,
@@ -329,7 +329,7 @@
                     if(this.local_hold === true){
                         
                         if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
-                            var result = WebPhone.MakeCall(WebPhone.SessionS[call_id]._consultNumber);
+                            var result = WebPhone.MakeCall(WebPhone.SessionS[call_id]._consultNumber,WebPhone.SessionS[call_id]._userdata);
                             msg.newCall = result.callid;
                             msg.cause = WebPhone.Cause.Consultation;
                             WebPhone.SessionS[msg.newCall]._status = WebPhone.STATUS.STATUS_CONSULTATIONING;
@@ -575,11 +575,13 @@
                 WebPhone.debug("SendDTMF,callid:" + callid + ",c:" + c + ",result:" + err);
             },
             // 盲转
-            SingleStepTransferCall: function (callid, s_destination) {
+            SingleStepTransferCall: function (callid, s_destination, userdata) {
                 WebPhone.debug("SingleStepTransferCall,callid:" + callid+ ",destination:" + s_destination);
                 if (callid && WebPhone.SessionS[callid]) {
                     WebPhone.debug('SingleStepTransfering the call...'+callid);                    
-                    var session = WebPhone.SessionS[callid].refer(s_destination);
+                    var session = WebPhone.SessionS[callid].refer(s_destination,{extraHeaders:[
+						"User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
+					]});
                     return 0;
     
                 }
@@ -640,11 +642,12 @@
             },
             
             //咨询
-            ConsultationCall:function(callid,called){
+            ConsultationCall:function(callid,called, userdata){
                 WebPhone.debug("ConsultationCall,callid:" + callid + ",called:" + called);
                 if (callid && WebPhone.SessionS[callid]) {
                     WebPhone.SessionS[callid]._status = WebPhone.STATUS.STATUS_CONSULTATIONING;
                     WebPhone.SessionS[callid]._consultNumber = called;
+                    WebPhone.SessionS[callid]._userdata = userdata;
                     WebPhone.SessionS[callid].hold();
                     WebPhone.debug('hold the call...' + callid);
                     //WebPhone.MakeCall(called);                    
