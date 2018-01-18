@@ -291,6 +291,12 @@
 				btnAlternate.onclick = function(){
 					WebPhone.AlternateCall(activeCall,otherCall);
 				}
+				
+				btnTransfer.disabled = false;
+				btnTransfer.value ='Transfer';
+				btnTransfer.onclick = function(){
+					WebPhone.TransferCall(otherCall, activeCall);
+				};
 				return;
 			}
 			txtCallStatus.innerHTML = '<i>通话中</i>';

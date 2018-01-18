@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.3.27",
+            _version: "2.0.3.28",
             _thisPath: "",
 
             callid: null,
@@ -568,7 +568,7 @@
                 }
                 WebPhone.debug("SendDTMF,callid:" + callid + ",c:" + c + ",result:" + err);
             },
-            // 呼转
+            // 盲转
             SingleStepTransferCall: function (callid, s_destination) {
                 WebPhone.debug("SingleStepTransferCall,callid:" + callid+ ",destination:" + s_destination);
                 if (callid && WebPhone.SessionS[callid]) {
@@ -579,6 +579,21 @@
                 }
                 else{
                     WebPhone.error("SingleStepTransferCall, the call is not exist.");
+                    return 1;
+                }
+            },
+			
+			// 咨询后转接
+            TransferCall: function (heldCall, transferTargetCall) {
+                WebPhone.debug("TransferCall,heldCall:" + heldCall+ ",transferTargetCall:" + transferTargetCall);
+                if (heldCall && WebPhone.SessionS[heldCall] && transferTargetCall && WebPhone.SessionS[transferTargetCall]) {
+                    WebPhone.debug('Transfering the call...');                    
+                    var session = WebPhone.SessionS[heldCall].refer(WebPhone.SessionS[transferTargetCall]);
+                    return 0;
+    
+                }
+                else{
+                    WebPhone.error("TransferCall, the call is not exist.");
                     return 1;
                 }
             },
