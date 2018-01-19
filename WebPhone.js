@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.7.30",
+            _version: "2.0.7.31",
             _thisPath: "",
 
             callid: null,
@@ -240,7 +240,7 @@
             },
             
             //绑定事件
-            bindEvent(session){
+            bindEvent: function(session){
                 session.on('progress', function (response,cause) {
                     //debugger;
                     WebPhone.debug('progress');
@@ -313,7 +313,7 @@
                         WebPhone.onCallCleared(msg);
                     }
 
-					document.body.removeChild(WebPhone.SessionS[call_id]._audio);
+					!WebPhone.SessionS[call_id]._audio || document.body.removeChild(WebPhone.SessionS[call_id]._audio);
                     delete WebPhone.SessionS[call_id];
                 });
                     
@@ -452,7 +452,7 @@
                         WebPhone.onCallCleared(msg);
                     }
 
-                    document.body.removeChild(WebPhone.SessionS[request.call_id]._audio);
+                    !WebPhone.SessionS[request.call_id]._audio || document.body.removeChild(WebPhone.SessionS[request.call_id]._audio);
                     delete WebPhone.SessionS[request.call_id];
                 });
                     
