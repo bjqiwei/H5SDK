@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.6.29",
+            _version: "2.0.7.30",
             _thisPath: "",
 
             callid: null,
@@ -827,9 +827,10 @@
 					
 				if (audio) {
 					audio.srcObject = remoteStream;
-					audio.play().catch(function () {
-						WebPhone.error('play was rejected');
+					/*audio.play().catch(function (e) {
+						WebPhone.error('play was rejected:' + e.message);
 					}.bind(session));
+					*/
 				}
 					
 			},
