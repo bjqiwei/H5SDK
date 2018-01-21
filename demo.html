@@ -130,7 +130,7 @@
             btnCall.disabled = !(b_connected);
 			btnCall.value = btnCall.innerHTML = 'Call';
 			btnCall.onclick = function () {
-			    WebPhone.MakeCall(txtPhoneNumber.value,txtUserData.value);
+			    WebPhone.MakeCall(txtPhoneNumber.value, Date.parse(new Date()) + '_' + txtUserData.value);
 			}
             btnHangUp.disabled = true;
         }
@@ -146,7 +146,7 @@
             btnCall.disabled = false;
 			btnCall.value = btnCall.innerHTML = 'Call';
 			btnCall.onclick = function () {
-                WebPhone.MakeCall(txtPhoneNumber.value,txtUserData.value);
+                WebPhone.MakeCall(txtPhoneNumber.value,Date.parse(new Date()) + '_' + txtUserData.value);
             };
             btnHangUp.disabled = true;
 			document.getElementById("ringbacktone").pause();
@@ -178,7 +178,7 @@
             btnCall.disabled = false;
 			btnCall.value = btnCall.innerHTML = 'Answer';
 			btnCall.onclick = function () {
-                WebPhone.AnswerCall(WebPhone.callid,txtUserData.value);
+                WebPhone.AnswerCall(WebPhone.callid,Date.parse(new Date()) + '_' + txtUserData.value);
             };
 			
             document.getElementById("ringtone").play();
@@ -318,20 +318,20 @@
 			btnTransfer.disabled = false;
 			btnTransfer.value ='Transfer';
 			btnTransfer.onclick = function(){
-				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, txtUserData.value);
+				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()) + '_' + txtUserData.value);
 			};
 
 			btnConsultaion.disabled = false;
 			btnConsultaion.value ='Consultation';
 			btnConsultaion.onclick = function(){
-				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, txtUserData.value);
+				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()) + '_' + txtUserData.value);
 			};
 			
 			btnAlternate.disabled = true;
 			
 			btnConference.disabled = false;
 			btnConference.onclick = function(){
-				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,txtUserData.value);
+				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,Date.parse(new Date()) + '_' + txtUserData.value);
 			}
 			
 			document.getElementById("ringbacktone").pause();
@@ -369,20 +369,20 @@
 			btnTransfer.disabled = false;
 			btnTransfer.value ='Transfer';
 			btnTransfer.onclick = function(){
-				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, txtUserData.value);
+				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()) + '_' + txtUserData.value);
 			};
 
 			btnConsultaion.disabled = false;
 			btnConsultaion.value ='Consultation';
 			btnConsultaion.onclick = function(){
-				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, txtUserData.value);
+				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()) + '_' + txtUserData.value);
 			};
 			
             btnAlternate.disabled = true;
 			
 			btnConference.disabled = false;
 			btnConference.onclick = function(){
-				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,txtUserData.value);
+				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,Date.parse(new Date()) + '_' + txtUserData.value);
 			}
         }
 
@@ -414,6 +414,10 @@
 			btnConference.disabled = true;
 		}
 		
+		WebPhone.onConferenceFailed = function(e){
+            txtCallStatus.innerHTML = '<i>会议失败 ' + e.reason + e.msg + '</i>';
+        }
+
         function sipRegister() {
             WebPhone.setLogLevel(txtLogLevel.value);
             WebPhone.Login(txtRealm.value, txtPrivateIdentity.value, txtPublicIdentity.value, txtPassword.value, txtDisplayName.value, txtWebsocketUrl.value, txtICEServer.value);
@@ -512,7 +516,7 @@
                         <label style="height: 100%">UserData:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtUserData" value="{'recordfile':'uuid.wav'}"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtUserData" value="uuid.wav"/>
                     </td>
                 </tr>
                 <tr>

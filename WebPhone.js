@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.7.31",
+            _version: "2.0.8.31",
             _thisPath: "",
 
             callid: null,
@@ -239,6 +239,35 @@
                 return WebPhone._version;
             },
             
+			onInfo:function(request) {
+				var call_id = request.call_id;
+				WebPhone.debug('info:' + call_id);
+				var msg={callid:call_id};
+				if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_SINGLESTEPCONFERENCEING){
+                    WebPhone.SessionS[call_id]._status = WebPhone.STATUS.STATUS_CONNECTED;
+                    msg.cause = WebPhone.Cause.SingleStepConference;
+					var status_code = parseInt(request.body.substr(0,request.body.indexOf(':')));
+					
+					if(status_code === 200){
+						WebPhone.debug("onConferenced:"+JSON.stringify(msg));
+						if (typeof(WebPhone.onConferenced) == "function") {
+							WebPhone.onConferenced(msg);
+						}
+						WebPhone.debug('单步会议中');
+					}
+					else{
+						msg.reason = status_code;
+						msg.msg = request.body.substr(request.body.indexOf(':')+1);
+						WebPhone.debug("onConferenceFailed:"+JSON.stringify(msg));
+						if (typeof(WebPhone.onConferenceFailed) == "function") {
+							WebPhone.onConferenceFailed(msg);
+						}
+						WebPhone.debug('单步会议失败:' + msg.reason);
+					}
+				    return;
+                }
+			},
+
             //绑定事件
             bindEvent: function(session){
                 session.on('progress', function (response,cause) {
@@ -320,7 +349,7 @@
                 session.on('cancel', function() {
                     WebPhone.debug('cancel');
                 });
-                    
+                
                 session.on('reinvite', function(session) {
                     WebPhone.debug('reinvite');
                 });
@@ -350,7 +379,8 @@
 						return;
                     }
 
-                    if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_SINGLESTEPCONFERENCEING){
+                    /*
+					if(WebPhone.SessionS[call_id]._status === WebPhone.STATUS.STATUS_SINGLESTEPCONFERENCEING){
                         WebPhone.SessionS[call_id]._status = WebPhone.STATUS.STATUS_CONNECTED;
                         msg.cause = WebPhone.Cause.SingleStepConference;
                         WebPhone.debug("onConferenced:"+JSON.stringify(msg));
@@ -360,6 +390,7 @@
                         WebPhone.debug('单步会议中');
 						return;
                     }
+					*/
 
                     if(this.local_hold === true){
                         
@@ -531,8 +562,9 @@
                         }
                     },
 					extraHeaders:[
-						"User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
-					]
+						"P-User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
+					],
+					onInfo:WebPhone.onInfo,
 					});
                     
                     if (session == null) {
@@ -572,8 +604,10 @@
                 if (callid && WebPhone.SessionS[callid]) {
                     WebPhone.debug('Connecting...');
                     WebPhone.SessionS[callid].accept({extraHeaders:[
-						"User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
-					]});
+						"P-User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
+					],
+					onInfo:WebPhone.onInfo
+					});
                 }
             },
             // 挂断 (SIP BYE or CANCEL)
@@ -621,7 +655,7 @@
                 if (callid && WebPhone.SessionS[callid]) {
                     WebPhone.debug('SingleStepTransfering the call...'+callid);                    
                     var session = WebPhone.SessionS[callid].refer(s_destination,{extraHeaders:[
-						"User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
+						"P-User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
 					]});
                     return 0;
     
@@ -767,7 +801,7 @@
                 
 				WebPhone.SessionS[activeCall]._status = WebPhone.STATUS.STATUS_SINGLESTEPCONFERENCEING;
 				WebPhone.SessionS[activeCall].reinvite({extraHeaders:["P-Conf-MetaData: type=0;user=" + destination + ";join=true",
-				"User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
+				"P-User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
 				]});
 
             },
