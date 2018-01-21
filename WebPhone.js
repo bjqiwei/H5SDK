@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.8.31",
+            _version: "2.0.8.32",
             _thisPath: "",
 
             callid: null,
@@ -336,6 +336,11 @@
                     WebPhone.callid = call_id;
                     message = message || {};
                     var msg = {"callid":call_id,"reason":message.status_code ? message.status_code:200,"msg":cause?cause:"OK"};
+
+                    if(WebPhone.SessionS[WebPhone.callid]._status === WebPhone.STATUS.STATUS_CONSULTATIONING){
+                        msg.cause = WebPhone.Cause.Consultation;
+                    }
+
                     WebPhone.debug("onCallCleared:" + JSON.stringify(msg));
                     WebPhone.info("通话已挂断:" + msg.reason);
                     if(typeof(WebPhone.onCallCleared) == "function"){
@@ -624,6 +629,9 @@
                     };
                 }
                 else{
+                    if(callid === null)
+						return;
+
                     WebPhone.debug('Terminating all call...');
                     var call_id;
                     for(call_id in WebPhone.SessionS){

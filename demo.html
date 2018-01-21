@@ -195,6 +195,9 @@
 				activeCall = null;
 				
 			if(otherCall || activeCall){
+				if (e.cause === WebPhone.Cause.Consultation){
+					txtRegStatus.innerHTML = "<i>" + "咨询失败" + e.reason + "</i>";
+				}
 				return;
 			}
 			
