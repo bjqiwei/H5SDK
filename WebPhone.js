@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.8.32",
+            _version: "2.0.8.33",
             _thisPath: "",
 
             callid: null,
@@ -630,7 +630,7 @@
                 }
                 else{
                     if(callid === null)
-						return;
+                        return;
 
                     WebPhone.debug('Terminating all call...');
                     var call_id;
@@ -640,9 +640,7 @@
                             WebPhone.SessionS[call_id].terminate({status_code:reason});
                         }
                         catch(e) {
-                            if (WebPhone.SessionS[callid].status === SIP.Session.C.STATUS_TERMINATED){
-                                delete WebPhone.SessionS[callid];
-                            }
+                            delete WebPhone.SessionS[call_id];
                         };
                     }
                     
