@@ -42,7 +42,7 @@
             btnRegister.disabled = b_connected || b_connecting;
             btnUnRegister.disabled = !b_connected && !b_connecting;
             btnCall.disabled = !(b_connected);
-			btnCall.value = btnCall.innerHTML = 'Call';
+			btnCall.value = btnCall.innerHTML = '呼叫';
 			btnCall.onclick = function () {
 			    WebPhone.MakeCall(txtPhoneNumber.value, Date.parse(new Date()).toString() + '_' + txtUserData.value);
 			}
@@ -52,13 +52,13 @@
         //ui
         function uiCallTerminated(s_description) {
 
-            btnHangUp.value = 'HangUp';
-            btnHoldRetrieve.value = 'Hold';
+            btnHangUp.value = '挂机';
+            btnHoldRetrieve.value = '保持';
 			btnHoldRetrieve.onclick = function(){
 				WebPhone.HoldCall(WebPhone.callid);
 			}
             btnCall.disabled = false;
-			btnCall.value = btnCall.innerHTML = 'Call';
+			btnCall.value = btnCall.innerHTML = '呼叫';
 			btnCall.onclick = function () {
                 WebPhone.MakeCall(txtPhoneNumber.value,Date.parse(new Date()).toString() + '_' + txtUserData.value);
             };
@@ -81,11 +81,11 @@
 		}
 		
         WebPhone.onReceived = function (e) {
-            btnHangUp.value = 'HangUp';
+            btnHangUp.value = '挂机';
             btnHangUp.disabled = false;
 			
             btnCall.disabled = false;
-			btnCall.value = btnCall.innerHTML = 'Answer';
+			btnCall.value = btnCall.innerHTML = '应答';
 			btnCall.onclick = function () {
                 WebPhone.AnswerCall(WebPhone.callid,Date.parse(new Date()).toString() + '_' + txtUserData.value);
             };
@@ -105,7 +105,7 @@
 				
 			if(otherCall || activeCall){
 				if (e.cause === WebPhone.Cause.Consultation){
-					txtRegStatus.innerHTML = "<i>" + "咨询失败" + e.reason + "</i>";
+					txtCallStatus.innerHTML = "<i>" + "咨询失败" + e.reason + "</i>";
 				}
 				return;
 			}
@@ -136,7 +136,7 @@
             otherCall = e.callid;
 		    if(e.cause === WebPhone.Cause.Consultation){
 				activeCall = e.newCall;
-				btnConsultaion.value = 'Reconnect';
+				btnConsultaion.value = '接回';
 				btnConsultaion.disabled = false;
 				btnConsultaion.onclick = function () {
 					WebPhone.ReconnectCall(activeCall,otherCall);
@@ -152,7 +152,7 @@
 				return;
 			}
 			
-            btnHoldRetrieve.value = 'Retrieve';
+            btnHoldRetrieve.value = '恢复';
             btnHoldRetrieve.disabled = false;
 			btnHoldRetrieve.onclick = function () {
 				WebPhone.RetrieveCall(activeCall);
@@ -199,13 +199,13 @@
 				btnHangUp.disabled = false;
 				
 				btnAlternate.disabled = false;
-				btnAlternate.value='Alternate';
+				btnAlternate.value='切换';
 				btnAlternate.onclick = function(){
 					WebPhone.AlternateCall(activeCall,otherCall);
 				}
 				
 				btnTransfer.disabled = false;
-				btnTransfer.value ='Transfer';
+				btnTransfer.value ='转接';
 				btnTransfer.onclick = function(){
 					WebPhone.TransferCall(otherCall, activeCall);
 				};
@@ -222,19 +222,19 @@
             btnHangUp.disabled = false;
 			
 			btnHoldRetrieve.disabled = false;
-			btnHoldRetrieve.value='Hold';
+			btnHoldRetrieve.value='保持';
 			btnHoldRetrieve.onclick = function(){
 				WebPhone.HoldCall(WebPhone.callid);
 			};
 			
 			btnTransfer.disabled = false;
-			btnTransfer.value ='Transfer';
+			btnTransfer.value ='转接';
 			btnTransfer.onclick = function(){
 				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()).toString() + '_' + txtUserData.value);
 			};
 
 			btnConsultaion.disabled = false;
-			btnConsultaion.value ='Consultation';
+			btnConsultaion.value ='咨询';
 			btnConsultaion.onclick = function(){
 				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()).toString() + '_' + txtUserData.value);
 			};
@@ -252,7 +252,7 @@
 		}
 		
         WebPhone.onHeldFailed = function (e) {
-            btnHoldRetrieve.value = 'Hold';
+            btnHoldRetrieve.value = '保持';
 			btnHoldRetrieve.onclick = function(){
 				WebPhone.HoldCall(WebPhone.callid);
 			}
@@ -273,19 +273,19 @@
             btnHangUp.disabled = false;
 			
 			btnHoldRetrieve.disabled = false;
-			btnHoldRetrieve.value='Hold';
+			btnHoldRetrieve.value='保持';
 			btnHoldRetrieve.onclick = function(){
 				WebPhone.HoldCall(activeCall);
 			};
 			
 			btnTransfer.disabled = false;
-			btnTransfer.value ='Transfer';
+			btnTransfer.value ='转接';
 			btnTransfer.onclick = function(){
 				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()).toString() + '_' + txtUserData.value);
 			};
 
 			btnConsultaion.disabled = false;
-			btnConsultaion.value ='Consultation';
+			btnConsultaion.value ='咨询';
 			btnConsultaion.onclick = function(){
 				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()).toString() + '_' + txtUserData.value);
 			};
@@ -344,6 +344,7 @@
             content.style.color = "red";
 			content.innerHTML = c;
 			logconsole.appendChild(content);
+			logconsole.scrollTop = logconsole.scrollHeight;
 		}
 		
 		window.console.warn = function(c){
@@ -352,6 +353,7 @@
             content.style.color = "blue";
 			content.innerHTML = c;
 			logconsole.appendChild(content);
+			logconsole.scrollTop = logconsole.scrollHeight;
 		}
 		
     </script>
@@ -469,18 +471,18 @@
             <table style='width: 100%;'>
                 <tr>
                     <td style="white-space:nowrap;">
-                        <input type="text" style="width: 100%; height:100%;" id="txtPhoneNumber" value="1234" placeholder="输入呼叫SIP URI"/>
+                        <input type="text" style="width: 100%; height:100%;" id="txtPhoneNumber" value="5001" placeholder="输入呼叫SIP URI"/>
                     </td>
                 </tr>
                 <tr>
                     <td colspan="1" align="right">
                         <div class="btn-toolbar" style="margin: 0; vertical-align:middle">
                             <div id="divBtnCallGroup" class="btn-group">
-                                <button id="btnCall" style="margin: 0; vertical-align:middle; height: 100%;" disabled class="btn btn-primary" data-toggle="dropdown">Call</button>
+                                <button id="btnCall" style="margin: 0; vertical-align:middle; height: 100%;" disabled class="btn btn-primary" data-toggle="dropdown">呼叫</button>
                             </div>
                             &nbsp;&nbsp;
                             <div class="btn-group">
-                                <input type="button" id="btnHangUp" style="margin: 0; vertical-align:middle; height: 100%;" class="btn btn-primary" value="HangUp" onclick='WebPhone.ClearCall();'
+                                <input type="button" id="btnHangUp" style="margin: 0; vertical-align:middle; height: 100%;" class="btn btn-primary" value="挂机" onclick='WebPhone.ClearCall();'
                                        disabled/>
                             </div>
                         </div>
@@ -489,11 +491,11 @@
                 <tr>
                     <td align='center'>
                         <div id='divCallOptions' class='call-options' style='opacity: 0; margin-top: 0px'>
-                            <input type="button" class="btn" style="" id="btnHoldRetrieve" value="Hold" onclick='WebPhone.HoldCall(WebPhone.callid);'/> &nbsp;
-                            <input type="button" class="btn" style="" id="btnTransfer" value="Transfer"/> &nbsp;
-							<input type="button" class="btn" style="" id="btnConsultaion" value="Consultation"/> &nbsp;
-							<input type="button" class="btn" style="" id="btnAlternate" value="Alternate"/> &nbsp;
-							<input type="button" class="btn" style="" id="btnConference" value="Conference"/> &nbsp;
+                            <input type="button" class="btn" style="" id="btnHoldRetrieve" value="保持" onclick='WebPhone.HoldCall(WebPhone.callid);'/> &nbsp;
+                            <input type="button" class="btn" style="" id="btnTransfer" value="转接"/> &nbsp;
+							<input type="button" class="btn" style="" id="btnConsultaion" value="咨询"/> &nbsp;
+							<input type="button" class="btn" style="" id="btnAlternate" value="切换"/> &nbsp;
+							<input type="button" class="btn" style="" id="btnConference" value="会议"/> &nbsp;
 							<input type="button" class="btn" style="" value="0" onclick='WebPhone.SendDTMF(null,"0");'/>
 							<input type="button" class="btn" style="" value="1" onclick='WebPhone.SendDTMF(null,"1");'/>
 							<input type="button" class="btn" style="" value="2" onclick='WebPhone.SendDTMF(null,"2");'/>
@@ -511,9 +513,9 @@
                 </tr>
             </table>
         </div>
-		<div id="divLogCtrl" class="span7 well" style='display:table-cell; vertical-align:middle'>
+		<div id="divLogCtrl" class="span7 well" >
 			<font>浏览器版本:</font><font id="userAgent"></font>
-			<div id="logconsole" style="overflow:scroll;width:100%;height:80%;font-size:12px;word-break:break-all;"></div>
+			<div id="logconsole" style="overflow:scroll;width:100%;height:50%;font-size:12px;word-break:break-all;"></div>
 		</div>
     </div>
 
