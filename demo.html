@@ -5,103 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <!-- Styles -->
     <link href="./assets/css/bootstrap.css" rel="stylesheet"/>
-    <style type="text/css">
-        body {
-            padding-top: 80px;
-            padding-bottom: 40px;
-        }
-
-        .navbar-inner-red {
-            background-color: #600000;
-            background-image: none;
-            background-repeat: no-repeat;
-            filter: none;
-        }
-
-        .full-screen {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        .normal-screen {
-            position: relative;
-        }
-
-        .call-options {
-            padding: 5px;
-            background-color: #f0f0f0;
-            border: 1px solid #eee;
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            -webkit-border-radius: 4px;
-            -moz-border-radius: 4px;
-            border-radius: 4px;
-            -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
-            -moz-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
-            box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
-            -webkit-transition-property: opacity;
-            -moz-transition-property: opacity;
-            -o-transition-property: opacity;
-            -webkit-transition-duration: 2s;
-            -moz-transition-duration: 2s;
-            -o-transition-duration: 2s;
-        }
-
-        .label-align {
-            display: block;
-            padding-left: 15px;
-            text-indent: -15px;
-        }
-
-        .input-align {
-            width: 13px;
-            height: 13px;
-            padding: 0;
-            margin: 0;
-            vertical-align: bottom;
-            position: relative;
-            top: -1px;
-            *overflow: hidden;
-        }
-
-        .glass-panel {
-            z-index: 99;
-            position: fixed;
-            width: 100%;
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            top: 0;
-            left: 0;
-            opacity: 0.8;
-            background-color: Gray;
-        }
-
-        .div-keypad {
-            z-index: 100;
-            position: fixed;
-            -moz-transition-property: width;
-            -o-transition-property: width;
-            -webkit-transition-duration: 2s;
-            -moz-transition-duration: 2s;
-            -o-transition-duration: 2s;
-        }
-
-    </style>
     <link href="./assets/css/bootstrap-responsive.css" rel="stylesheet"/>
     <script type="text/javascript" src="WebPhone.js"></script>
     <!-- Javascript code -->
     <script type="text/javascript">
-        var oNotifICall;
         var oReadyStateTimer;
 		var activeCall;
 		var otherCall;
 
         window.onload = function () {
             window.console && window.console.info && window.console.info("location=" + window.location);
+			userAgent.innerHTML = navigator.userAgent;
             // Initialize call button
             btnRegister.disabled = false;
 
@@ -111,7 +25,7 @@
                             WebPhone.Init();
                         }
                     },
-                    100);
+                    200);
 
         }
 		
@@ -155,11 +69,6 @@
 
             txtCallStatus.innerHTML = "<i>" + s_description + "</i>";
             divCallOptions.style.opacity = 0;
-
-            if (oNotifICall) {
-                oNotifICall.cancel();
-                oNotifICall = null;
-            }
 
 
             setTimeout(function () {
@@ -427,6 +336,24 @@
 			uiOnConnectionEvent(false,true);
         }
 		
+		var origerror = window.console.error;
+		var origwarn = window.console.warn;
+		window.console.error = function(c){
+			origerror.call(this,c);
+			var content = document.createElement("div");
+            content.style.color = "red";
+			content.innerHTML = c;
+			logconsole.appendChild(content);
+		}
+		
+		window.console.warn = function(c){
+			origwarn.call(this, c);
+			var content = document.createElement("div");
+            content.style.color = "blue";
+			content.innerHTML = c;
+			logconsole.appendChild(content);
+		}
+		
     </script>
 </head>
 <body>
@@ -584,6 +511,10 @@
                 </tr>
             </table>
         </div>
+		<div id="divLogCtrl" class="span7 well" style='display:table-cell; vertical-align:middle'>
+			<font>浏览器版本:</font><font id="userAgent"></font>
+			<div id="logconsole" style="overflow:scroll;width:100%;height:80%;font-size:12px;word-break:break-all;"></div>
+		</div>
     </div>
 
     <br/>
@@ -614,20 +545,6 @@
 <audio id="ringtone" loop="true" src="sounds/ringtone.wav"></audio>
 <audio id="ringbacktone" loop="true" src="sounds/ringbacktone.wav"></audio>
 <audio id="dtmfTone" src="sounds/dtmf.wav"></audio>
-
-<!-- GOOGLE ANALYTICS -->
-<script type="text/javascript">
-    var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-    document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-
-<script type="text/javascript">
-    try {
-        var pageTracker = _gat._getTracker("UA-6868621-19");
-        pageTracker._trackPageview();
-    } catch (err) {
-    }
-</script>
 
 </body>
 </html>
