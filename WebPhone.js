@@ -801,7 +801,7 @@
             SingleStepConference:function (activeCall, destination,userdata){
                 WebPhone.debug("SingleStepConference,activeCall:" + activeCall +",destination:" + destination);
                 if (!activeCall || !WebPhone.SessionS[activeCall]){
-                    WebPhone.error("SingleStepConference, the is not exist.");
+                    WebPhone.error("SingleStepConference, the call is not exist.");
                     return 1;
                 }
                 
