@@ -48,7 +48,7 @@
             btnCall.disabled = !(b_connected);
 			btnCall.value = btnCall.innerHTML = '呼叫';
 			btnCall.onclick = function () {
-			    WebPhone.MakeCall(txtPhoneNumber.value,  txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_HH:mm:ss') + '_' + getSeq() + '.wav');
+			    WebPhone.MakeCall(txtPhoneNumber.value,  txtCustomerID.value + '_' + txtAgentID.value );
 			}
             btnHangUp.disabled = true;
         }
@@ -64,7 +64,7 @@
             btnCall.disabled = false;
 			btnCall.value = btnCall.innerHTML = '呼叫';
 			btnCall.onclick = function () {
-                WebPhone.MakeCall(txtPhoneNumber.value,txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_HH:mm:ss') + '_' + getSeq() + '.wav');
+                WebPhone.MakeCall(txtPhoneNumber.value,txtCustomerID.value + '_' + txtAgentID.value );
             };
             btnHangUp.disabled = true;
 			document.getElementById("ringbacktone").pause();
@@ -92,7 +92,7 @@
             btnCall.disabled = false;
 			btnCall.value = btnCall.innerHTML = '应答';
 			btnCall.onclick = function () {
-                WebPhone.AnswerCall(WebPhone.callid,txtCustomerID.value + '_' + txtAgentID.value + '_'  + sRemoteNumber + '_' + txtPrivateIdentity.value + '_' + (new Date()).Format('yyyy-MM-dd_HH:mm:ss') + '_' + getSeq() + '.wav');
+                WebPhone.AnswerCall(WebPhone.callid,txtCustomerID.value + '_' + txtAgentID.value);
             };
 			
             document.getElementById("ringtone").play();
@@ -235,20 +235,20 @@
 			btnTransfer.disabled = false;
 			btnTransfer.value ='转接';
 			btnTransfer.onclick = function(){
-				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_HH:mm:ss') + '_' + getSeq() + '.wav');
+				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value );
 			};
 
 			btnConsultaion.disabled = false;
 			btnConsultaion.value ='咨询';
 			btnConsultaion.onclick = function(){
-				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_HH:mm:ss') + '_' + getSeq() + '.wav');
+				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value );
 			};
 			
 			btnAlternate.disabled = true;
 			
 			btnConference.disabled = false;
 			btnConference.onclick = function(){
-				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_HH:mm:ss') + '_' + getSeq() + '.wav');
+				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,txtCustomerID.value + '_' + txtAgentID.value );
 			}
 			
 			document.getElementById("ringbacktone").pause();
@@ -286,20 +286,20 @@
 			btnTransfer.disabled = false;
 			btnTransfer.value ='转接';
 			btnTransfer.onclick = function(){
-				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_HH:mm:ss') + '_' + getSeq() + '.wav');
+				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value );
 			};
 
 			btnConsultaion.disabled = false;
 			btnConsultaion.value ='咨询';
 			btnConsultaion.onclick = function(){
-				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_HH:mm:ss') + '_' + getSeq() + '.wav');
+				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value );
 			};
 			
             btnAlternate.disabled = true;
 			
 			btnConference.disabled = false;
 			btnConference.onclick = function(){
-				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_HH:mm:ss') + '_' + getSeq() + '.wav');
+				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,txtCustomerID.value + '_' + txtAgentID.value );
 			}
         }
 
