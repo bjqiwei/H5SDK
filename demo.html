@@ -32,6 +32,10 @@
 		window.onunload  = function (){
 			//WebPhone.ClearCall();
 		}
+		
+		function getSeq(){
+			return '001';
+		}
         //ui
         function showNotifICall(s_number) {
             txtCallStatus.innerHTML = '<i>来电振铃['+s_number+']</i>';
@@ -44,7 +48,7 @@
             btnCall.disabled = !(b_connected);
 			btnCall.value = btnCall.innerHTML = '呼叫';
 			btnCall.onclick = function () {
-			    WebPhone.MakeCall(txtPhoneNumber.value, Date.parse(new Date()).toString() + '_' + txtUserData.value);
+			    WebPhone.MakeCall(txtPhoneNumber.value,  txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_H:m:s') + '_' + getSeq() + '.wav');
 			}
             btnHangUp.disabled = true;
         }
@@ -60,7 +64,7 @@
             btnCall.disabled = false;
 			btnCall.value = btnCall.innerHTML = '呼叫';
 			btnCall.onclick = function () {
-                WebPhone.MakeCall(txtPhoneNumber.value,Date.parse(new Date()).toString() + '_' + txtUserData.value);
+                WebPhone.MakeCall(txtPhoneNumber.value,txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_H:m:s') + '_' + getSeq() + '.wav');
             };
             btnHangUp.disabled = true;
 			document.getElementById("ringbacktone").pause();
@@ -80,6 +84,7 @@
 			uiCallTerminated(e.reason + ":" + e.msg);
 		}
 		
+		var sRemoteNumber;
         WebPhone.onReceived = function (e) {
             btnHangUp.value = '挂机';
             btnHangUp.disabled = false;
@@ -87,11 +92,11 @@
             btnCall.disabled = false;
 			btnCall.value = btnCall.innerHTML = '应答';
 			btnCall.onclick = function () {
-                WebPhone.AnswerCall(WebPhone.callid,Date.parse(new Date()).toString() + '_' + txtUserData.value);
+                WebPhone.AnswerCall(WebPhone.callid,txtCustomerID.value + '_' + txtAgentID.value + '_'  + sRemoteNumber + '_' + txtPrivateIdentity.value + '_' + (new Date()).Format('yyyy-MM-dd_H:m:s') + '_' + getSeq() + '.wav');
             };
 			
             document.getElementById("ringtone").play();
-            var sRemoteNumber = (e.caller || 'unknown');
+            sRemoteNumber = (e.caller || 'unknown');
             showNotifICall(sRemoteNumber);
         }
 
@@ -230,20 +235,20 @@
 			btnTransfer.disabled = false;
 			btnTransfer.value ='转接';
 			btnTransfer.onclick = function(){
-				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()).toString() + '_' + txtUserData.value);
+				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_H:m:s') + '_' + getSeq() + '.wav');
 			};
 
 			btnConsultaion.disabled = false;
 			btnConsultaion.value ='咨询';
 			btnConsultaion.onclick = function(){
-				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()).toString() + '_' + txtUserData.value);
+				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_H:m:s') + '_' + getSeq() + '.wav');
 			};
 			
 			btnAlternate.disabled = true;
 			
 			btnConference.disabled = false;
 			btnConference.onclick = function(){
-				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,Date.parse(new Date()).toString() + '_' + txtUserData.value);
+				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_H:m:s') + '_' + getSeq() + '.wav');
 			}
 			
 			document.getElementById("ringbacktone").pause();
@@ -281,20 +286,20 @@
 			btnTransfer.disabled = false;
 			btnTransfer.value ='转接';
 			btnTransfer.onclick = function(){
-				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()).toString() + '_' + txtUserData.value);
+				WebPhone.SingleStepTransferCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_H:m:s') + '_' + getSeq() + '.wav');
 			};
 
 			btnConsultaion.disabled = false;
 			btnConsultaion.value ='咨询';
 			btnConsultaion.onclick = function(){
-				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, Date.parse(new Date()).toString() + '_' + txtUserData.value);
+				WebPhone.ConsultationCall(activeCall, txtPhoneNumber.value, txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_H:m:s') + '_' + getSeq() + '.wav');
 			};
 			
             btnAlternate.disabled = true;
 			
 			btnConference.disabled = false;
 			btnConference.onclick = function(){
-				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,Date.parse(new Date()).toString() + '_' + txtUserData.value);
+				WebPhone.SingleStepConference(activeCall,txtPhoneNumber.value,txtCustomerID.value + '_' + txtAgentID.value + '_'  + txtPrivateIdentity.value + '_' + txtPhoneNumber.value + '_' + (new Date()).Format('yyyy-MM-dd_H:m:s') + '_' + getSeq() + '.wav');
 			}
         }
 
@@ -445,10 +450,18 @@
                 </tr>
 				<tr>
                     <td>
-                        <label style="height: 100%">UserData:</label>
+                        <label style="height: 100%">客户ID:</label>
                     </td>
                     <td>
-                        <input type="text" style="width: 100%; height: 100%" id="txtUserData" value="uuid.wav"/>
+                        <input type="text" style="width: 100%; height: 100%" id="txtCustomerID" value="101"/>
+                    </td>
+                </tr>
+				<tr>
+                    <td>
+                        <label style="height: 100%">用户ID:</label>
+                    </td>
+                    <td>
+                        <input type="text" style="width: 100%; height: 100%" id="txtAgentID" value="2001"/>
                     </td>
                 </tr>
                 <tr>
@@ -542,6 +555,7 @@
 <script type="text/javascript" src="./assets/js/bootstrap-collapse.js"></script>
 <script type="text/javascript" src="./assets/js/bootstrap-carousel.js"></script>
 <script type="text/javascript" src="./assets/js/bootstrap-typeahead.js"></script>
+<script type="text/javascript" src="./assets/js/DateFormat.js"></script>
 
 <!-- Audios -->
 <audio id="ringtone" loop="true" src="sounds/ringtone.wav"></audio>
