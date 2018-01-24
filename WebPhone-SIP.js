@@ -8815,7 +8815,8 @@ module.exports = function (SIP) {
      */
 	 
     holdModifier: { writable: true, value: function holdModifier(desc) {
-		var description = desc;
+        var description = {};
+        description.sdp = desc.sdp; description.type = desc.type;
         if (!/a=(sendrecv|sendonly|recvonly|inactive)/.test(description.sdp)) {
           description.sdp = description.sdp.replace(/(m=[^\r]*\r\n)/g, '$1a=sendonly\r\n');
         } else {
@@ -8971,15 +8972,15 @@ module.exports = function (SIP) {
         this.session.emit('peerConnection-created', this.peerConnection);
 
         this.peerConnection.ontrack = function (e) {
-          self.logger.log('track added');
-          self.emit('addTrack', e);
-        };
+			  self.logger.log('track added');
+			  self.emit('addTrack', e);
+			};
 
-        this.peerConnection.onaddstream = function (e) {
-          self.logger.warn('Using deprecated stream API');
-          self.logger.log('stream added');
-          self.emit('addStream', e);
-        };
+			this.peerConnection.onaddstream = function (e) {
+			  self.logger.warn('Using deprecated stream API');
+			  self.logger.log('stream added');
+			  self.emit('addStream', e);
+			};
 
         // TODO: There is no remove track listener
         this.peerConnection.onremovestream = function (e) {

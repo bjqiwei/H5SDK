@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.8.37",
+            _version: "2.0.8.38",
             _thisPath: "",
 
             callid: null,
@@ -828,8 +828,10 @@
             },
 
 			setupRemoteMedia:function(session){
-				if(!session)
+				if(!session){
+					WebPhone.warn('setupRemoteMedia:session is null');
 					return;
+				}
 				
 				var audio = session._audio;
 				if (!audio){
@@ -838,17 +840,17 @@
 					audio.setAttribute("autoplay", "true");
 					document.body.appendChild(audio);
 					session._audio = audio;
+
+					session.sessionDescriptionHandler.on('addTrack', function () {
+						WebPhone.setupRemoteMedia(this);
+					}.bind(session));
+
+					session.sessionDescriptionHandler.on('addStream', function () {
+						WebPhone.setupRemoteMedia(this);
+					}.bind(session));
 				}
 				
-				
-				session.sessionDescriptionHandler.on('addTrack', function () {
-				  WebPhone.setupRemoteMedia();
-				}.bind(session));
-
-				session.sessionDescriptionHandler.on('addStream', function () {
-				  WebPhone.setupRemoteMedia();
-				}.bind(session));
-				
+				WebPhone.debug('setupRemoteMedia:' + session.id.substr(0,session.id.indexOf(session.from_tag)));
 				
 				var pc = session.sessionDescriptionHandler.peerConnection;
 				var remoteStream;
@@ -866,6 +868,7 @@
 				}
 					
 				if (audio) {
+					WebPhone.debug(session.id.substr(0,session.id.indexOf(session.from_tag)) + ' set audio.srcObject:' + remoteStream);
 					audio.srcObject = remoteStream;
 					/*audio.play().catch(function (e) {
 						WebPhone.error('play was rejected:' + e.message);
