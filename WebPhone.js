@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.8.36",
+            _version: "2.0.8.37",
             _thisPath: "",
 
             callid: null,

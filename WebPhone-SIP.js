@@ -8813,7 +8813,9 @@ module.exports = function (SIP) {
      * @param {String} [sdp] The description that will be modified
      * @returns {Promise} Promise that resolves with modified SDP
      */
-    holdModifier: { writable: true, value: function holdModifier(description) {
+	 
+    holdModifier: { writable: true, value: function holdModifier(desc) {
+		var description = desc;
         if (!/a=(sendrecv|sendonly|recvonly|inactive)/.test(description.sdp)) {
           description.sdp = description.sdp.replace(/(m=[^\r]*\r\n)/g, '$1a=sendonly\r\n');
         } else {
