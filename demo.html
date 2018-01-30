@@ -22,7 +22,9 @@
             oReadyStateTimer = setInterval(function () {
                         if (document.readyState === "complete") {
                             clearInterval(oReadyStateTimer);
-                            WebPhone.Init();
+                            if(!WebPhone.Init()){
+								alert("not support webrtc");
+							}
                         }
                     },
                     200);

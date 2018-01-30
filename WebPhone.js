@@ -65,11 +65,36 @@
                 
                 if (typeof(SIP) == "undefined") {
                     WebPhone.error("SIP not init");
-                    alert("SIP not init");
-                    return;
+                    return false;
                 }
-
+				navigator.mediaDevices = navigator.mediaDevices || {};
+				navigator.mediaDevices.getUserMedia = navigator.mediaDevices.getUserMedia || navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+				
+				if(!navigator.mediaDevices.getUserMedia){
+					WebPhone.error("not support getUserMedia");
+					return false;
+				}
+				
+				if(!navigator.mediaDevices.getUserMedia.bind){
+					navigator.mediaDevices.getUserMedia.bind = function(obj){
+						return navigator.mediaDevices.getUserMedia;
+					};
+				}
+				
+				window.RTCPeerConnection = window.RTCPeerConnection || window.mozRTCPeerConnection || window.webkitRTCPeerConnection || window.msRTCPeerConnection;
+				if(!window.RTCPeerConnection){
+					WebPhone.error("not support RTCPeerConnection");
+					return false;
+				}
+				
+				window.RTCSessionDescription = window.RTCSessionDescription || window.mozRTCSessionDescription || window.webkitRTCSessionDescription || window.msRTCSessionDescription;
+				if(!window.RTCSessionDescription){
+					WebPhone.error("not support RTCSessionDescription");
+					return false;
+				}
+				
                 WebPhone.info("init success");
+				return true;
             },
             
             /**
