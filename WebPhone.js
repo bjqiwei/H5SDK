@@ -9,6 +9,8 @@
             SessionS: {},
             userAgent: null,
             loglevel:"debug",
+            microInfos:null,
+            microId:null,
             
             STATUS:{
             // call states
@@ -126,9 +128,9 @@
                   //hackViaTcp: true,
                   sessionDescriptionHandlerFactoryOptions: {
                       constraints: {
-                            audio: true,
-                            video: false
-                      },
+                          audio:{deviceId:WebPhone.microId},
+                          video:false
+					  },
                       //iceCheckingTimeout: 15000,
                       peerConnectionOptions: {
                           rtcConfiguration:{
@@ -372,7 +374,8 @@
                         WebPhone.onCallCleared(msg);
                     }
 
-					!WebPhone.SessionS[call_id]._audio || document.body.removeChild(WebPhone.SessionS[call_id]._audio);
+                    WebPhone.cleanupMedia(WebPhone.SessionS[call_id]);
+                    WebPhone.SessionS[call_id]._audio && document.body.removeChild(WebPhone.SessionS[call_id]._audio);
                     delete WebPhone.SessionS[call_id];
                 });
                     
@@ -513,7 +516,8 @@
                         WebPhone.onCallCleared(msg);
                     }
 
-                    !WebPhone.SessionS[request.call_id]._audio || document.body.removeChild(WebPhone.SessionS[request.call_id]._audio);
+                    WebPhone.cleanupMedia(WebPhone.SessionS[request.call_id]);
+                    WebPhone.SessionS[request.call_id]._audio && document.body.removeChild(WebPhone.SessionS[request.call_id]._audio);
                     delete WebPhone.SessionS[request.call_id];
                 });
                     
@@ -587,9 +591,9 @@
                     // create call session
                     session = WebPhone.userAgent.invite(called, {sessionDescriptionHandlerOptions: {
                         constraints: {
-                            audio: true,
+                            audio:{deviceId:WebPhone.microId},
                             video: false
-                        }
+						}
                     },
 					extraHeaders:[
 						"P-User-to-User:" + (userdata ? typeof(userdata) === "string" ? userdata: JSON.stringify(userdata): "")
@@ -902,6 +906,51 @@
 				}
 					
 			},
+			
+			cleanupMedia:function(session){
+				
+				if (!session){
+					WebPhone.warn('cleanupMedia:session is null');
+					return;
+				}
+				
+				WebPhone.debug('cleanupMedia:' + session.id.substr(0,session.id.indexOf(session.from_tag)));
+				if(session._audio) {
+					session._audio.srcObject = null;
+					session._audio.pause();
+				}
+			},
+			
+			//getsystemdevice
+			getSystemDevice:function(){
+				WebPhone.microInfos = new Array();
+				navigator.mediaDevices.enumerateDevices()
+				.then(function(devices) {
+					devices.forEach(function(device) {
+						WebPhone.info(device.kind + ": " + device.label +
+									" id = " + device.deviceId);
+						if(device.kind === 'audioinput'){
+						  WebPhone.microInfos.push(device);
+						}
+					  });
+					})
+					
+					.catch(function(err) {
+					  WebPhone.error(err.name + ": " + err.message);
+				})
+			},
+				
+			//获取设备
+			getMicrophone:function(){
+				WebPhone.info('device:' + JSON.stringify(WebPhone.microInfos));
+				return WebPhone.microInfos;
+			},
+			
+			//设置媒体设备
+			setMicrophone(microId){
+				WebPhone.microId = microId;
+				WebPhone.debug('setMicrophone:' + JSON.stringify(WebPhone.microId));
+			},
 
             /**
              * 返回当前日期+时间
@@ -1017,4 +1066,5 @@
             },
         }
     WebPhone.loading();
+	WebPhone.getSystemDevice();
 })();

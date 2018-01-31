@@ -25,6 +25,23 @@
                             if(!WebPhone.Init()){
 								alert("not support webrtc");
 							}
+							else{
+								var audioInputSelect = document.querySelector('select#audioSource');
+								var deviceInfos = WebPhone.getMicrophone();
+								for (var i = 0; i !== deviceInfos.length; ++i) {
+									var deviceInfo = deviceInfos[i];
+									var option = document.createElement('option');
+									option.value = deviceInfo.deviceId;
+									option.text = deviceInfo.label || 'microphone ' + (audioInputSelect.length + 1);
+									audioInputSelect.appendChild(option);
+									
+								}
+								
+								audioInputSelect.onchange = function(){
+									var audioInputSelect = document.querySelector('select#audioSource');
+									WebPhone.setMicrophone(audioInputSelect.value);
+								};
+							}
                         }
                     },
                     200);
@@ -492,6 +509,9 @@
                 <tr>
                     <td colspan="1" align="right">
                         <div class="btn-toolbar" style="margin: 0; vertical-align:middle">
+							<div class="btn-group">
+								<select id="audioSource" style="margin: 0; vertical-align:middle; height: 100%;" class="btn"></select>
+							</div>
                             <div id="divBtnCallGroup" class="btn-group">
                                 <button id="btnCall" style="margin: 0; vertical-align:middle; height: 100%;" disabled class="btn btn-primary" data-toggle="dropdown">呼叫</button>
                             </div>
