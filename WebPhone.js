@@ -1,7 +1,7 @@
 (function () {
     
     window.WebPhone = window.WebPhone || {
-            _version: "2.0.8.38",
+            _version: "2.0.8.40",
             _thisPath: "",
 
             callid: null,
@@ -947,8 +947,28 @@
 			},
 			
 			//设置媒体设备
-			setMicrophone(microId){
+			setMicrophone:function(microId){
 				WebPhone.microId = microId;
+				var call_id;
+                for(call_id in WebPhone.SessionS){
+                    WebPhone.debug('setMicrophone the call...'+call_id);
+                    var constraints={audio:{deviceId:microId}};
+					WebPhone.SessionS[call_id].sessionDescriptionHandler.WebRTC.getUserMedia(constraints).then(function(stream){
+						var pc = this.sessionDescriptionHandler.peerConnection;
+								
+							if (pc.addTrack) {
+								stream.getTracks().forEach(function (track) {
+									WebPhone.warn(pc.addTrack(track, stream));
+								});
+							} else {
+								// Chrome 59 does not support addTrack
+								pc.addStream(stream);
+							}
+							
+							
+					}.bind(WebPhone.SessionS[call_id]));
+                    
+                }
 				WebPhone.debug('setMicrophone:' + JSON.stringify(WebPhone.microId));
 			},
 
